@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drivers Ed Master Study Hub</title>
+    <style>
+        :root {
+            --sidebar-width: 300px;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --accent-bg: #eff6ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR STYLING */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Search Input */
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Quizlet Quick Links */
+        .quick-links {
+            background: var(--accent-bg);
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .quick-links h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .quizlet-btn {
+            display: block;
+            text-align: center;
+            padding: 6px 8px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .quizlet-btn:hover {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+
+        /* Tab Control for Adding Content */
+        .tab-container {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: #f1f5f9;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab-content {
+            padding: 12px;
+        }
+
+        /* File Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: var(--accent-bg);
+        }
+
+        .upload-area.dragging {
+            border-color: var(--primary);
+            background: var(--accent-bg);
+        }
+
+        .upload-area p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        #fileInput { display: none; }
+
+        /* Paste Box */
+        #pasteInput {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 8px;
+        }
+
+        .btn-action {
+            width: 100%;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-action:disabled {
+            cursor: wait;
+            opacity: 0.7;
+        }
+
+        /* Navigation List */
+        .nav-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .module-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .module-list a {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 6px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .module-list a:hover {
+            background: var(--accent-bg);
+            color: var(--primary);
+        }
+
+        .badge-count {
+            background: #e2e8f0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 32px;
+            max-width: 1200px;
+        }
+
+        /* Top Banner Stats */
+        .top-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+        }
+
+        .stat-group {
+            display: flex;
+            gap: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-item .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-item .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Module Card & Tables */
+        .module-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+
+        .module-card h2 {
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .study-list {
+            list-style: none;
+            counter-reset: study-item;
+        }
+
+        .study-list li {
+            counter-increment: study-item;
+            display: grid;
+            grid-template-columns: 2.5rem minmax(0, 1fr);
+            gap: 10px;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.6;
+        }
+
+        .study-list li::before {
+            content: counter(study-item, decimal-leading-zero);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding-top: 2px;
+        }
+
+        .study-list li:nth-child(even) { background: #fafafa; }
+
+        mark {
+            background: #fef08a;
+            color: #713f12;
+            font-weight: 700;
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+
+        .model-status {
+            min-height: 1rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 760px) {
+            body { display: block; }
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px 16px;
+            }
+            .top-banner {
+                align-items: flex-start;
+                gap: 16px;
+                padding: 16px;
+            }
+            .stat-group { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Drivers Ed Hub</h2>
+            <p>Comprehensive Study Answer Key</p>
+        </div>
+
+        <!-- Search Input -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search study notes..." oninput="filterSearch()">
+        </div>
+
+        <!-- Quizlet Direct Links -->
+        <div class="quick-links">
+            <h3>Quizlet Direct Links</h3>
+            <div class="link-grid">
+                    <a href="https://quizlet.com/126461449/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 2 ↗</a>
+                    <a href="https://quizlet.com/126731738/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 3 ↗</a>
+                    <a href="https://quizlet.com/126732227/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 4 ↗</a>
+                    <a href="https://quizlet.com/126981466/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 5 ↗</a>
+            </div>
+        </div>
+
+        <!-- Tabbed Input Panel -->
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('paste', this)">Paste Text</button>
+                <button class="tab-btn" onclick="switchTab('upload', this)">Upload .TXT</button>
+            </div>
+
+            <!-- Paste Tab -->
+            <div id="tabPaste" class="tab-content">
+                <textarea id="pasteInput" placeholder="Copy text from Quizlet and paste it here..."></textarea>
+                <button class="btn-action" onclick="handlePaste()">+ Parse & Add Module</button>
+                <p class="model-status" id="modelStatus" role="status" aria-live="polite">Simple cards parse instantly. Complex cards use on-device AI; its first use downloads the model.</p>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="tabUpload" class="tab-content hidden">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()" ondragover="handleFileDragOver(event)" ondragleave="handleFileDragLeave(event)" ondrop="handleFileDrop(event)">
+                    <strong>+ Choose .TXT File</strong>
+                    <p>Click or drag file here</p>
+                    <input type="file" id="fileInput" accept=".txt" multiple onclick="event.stopPropagation()" onchange="handleFileUpload(event)">
+                </div>
+                <p class="model-status" id="uploadStatus" role="status" aria-live="polite"></p>
+            </div>
+        </div>
+
+        <!-- Loaded Modules Navigation -->
+        <nav class="nav-section">
+            <h3>Loaded Modules</h3>
+            <ul class="module-list" id="moduleNav"></ul>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <!-- Dashboard Top Banner -->
+        <div class="top-banner">
+            <div>
+                <h1 style="font-size: 1.4rem;">Master Answer Key</h1>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Easily searchable database across all study modules</p>
+            </div>
+            <div class="stat-group">
+                <div class="stat-item">
+                    <span class="value" id="statModules">0</span>
+                    <span class="label">Modules</span>
+                </div>
+                <div class="stat-item">
+                    <span class="value" id="statQuestions">0</span>
+                    <span class="label">Questions</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modules Container -->
+        <div id="modulesContainer"></div>
+    </main>
+
+    <script>
+        const moduleStore = [];
+
+        // Preloaded Module 2 Data
+        const module2Data = {
+            title: "Drivers Ed Module 2",
+            items: [
+                { num: 1, q: "Correct procedure for securing a vehicle: stop, set parking brake, place gear selector in park, turn off accessories, turn ignition off, lock ignition and remove key, remove occupant restraints, check traffic and exit vehicle, secure doors", a: "True" },
+                { num: 2, q: "The side view mirrors should be adjusted to the contemporary (BGE) mirror setting, which means the driver can see _____", a: "the vehicles in the lanes beside his/her vehicle" },
+                { num: 3, q: "Driving with the hands in the 8 o'clock and 4 o'clock position _____", a: "reduces excessive steering. helps protect the driver from airbag injuries improves vehicle stability" },
+                { num: 4, q: "The driver should set accessories before putting the vehicle in drive.", a: "True" },
+                { num: 5, q: "Tire pressure should be checked _____", a: "weekly" },
+                { num: 6, q: "When the mirrors are set correctly, there is no need to check blind zones.", a: "False" },
+                { num: 7, q: "The oil should be changed every _____", a: "3000-5000 miles" },
+                { num: 8, q: "The lap belt should be adjusted to fit snugly _____", a: "across the hips" },
+                { num: 9, q: "When seated properly, the driver's chin should be above the steering wheel", a: "True" },
+                { num: 10, q: "To adjust the side view mirror for the BGE mirror setting, the driver should sit in the driving position", a: "False" },
+                { num: 11, q: "Locking the door ensures that they will not fly open during a crash.", a: "False" },
+                { num: 12, q: "When seated properly, the driver should be at least _____ inches from the steering wheel.", a: "10" },
+                { num: 13, q: "The steering wheel should be adjusted upward towards the face", a: "False" },
+                { num: 14, q: "___ is the routine care you give your vehicle is outlined in the owner's manual includes checking fluids", a: "Preventative maintenance" },
+                { num: 15, q: "When using the accelerator and brake pedal, the heel of the foot should remain on the floor.", a: "True" },
+                { num: 16, q: "The head restraint should be adjusted", a: "Just above the ears" },
+                { num: 17, q: "The rearview mirror should be adjusted to frame the back windshield.", a: "True" },
+                { num: 18, q: "All vehicles have adjustable head restraints.", a: "False" },
+                { num: 19, q: "The turn signal will always cancel after a turn.", a: "False" },
+                { num: 20, q: "The horn should NOT be used to ____", a: "Show Anger" },
+                { num: 21, q: "Head restraints are designed to help reduce _____.", a: "Whip lash injuries" },
+                { num: 22, q: "When the daytime running lights are in use, the tail lights are not on", a: "True" },
+                { num: 23, q: "Cruise control guidelines", a: "allows a driver to select and travel at a set speed / works at speeds above 25 mph / should not be used on slippery surfaces" },
+                { num: 24, q: "Position one on the ignition switch allows you to use accessories with the engine off.", a: "True" },
+                { num: 25, q: "Pedal extensions are available to allow short drivers to maintain a safe distance from the steering wheel.", a: "True" },
+                { num: 26, q: "Gears below drive, provide more engine power", a: "True" },
+                { num: 27, q: "Safety experts recommend the use of headlights whenever the vehicle is moving", a: "True" },
+                { num: 28, q: "When backing, the driver should turn the steering wheel to the right in order to back to the left.", a: "False" },
+                { num: 29, q: "When securing the vehicle, the parking brake should be set before placing the vehicle in Park.", a: "True" },
+                { num: 30, q: "If the driver needs to adjust the defroster, he/she should place the steering hand at the top of the steering wheel temporarily", a: "False" },
+                { num: 31, q: "Braking just short of lockup is known as _____.", a: "Threshold Braking" },
+                { num: 32, q: "Ideal vehicle balance is reached when _____.", a: "The Vehicle is stationary" },
+                { num: 33, q: "If your vehicle is not equipped with ABS, hard controlled braking should be done _____", a: "Prior to evasive steering" },
+                { num: 34, q: "One hand steering is recommended _____", a: "When backing" },
+                { num: 35, q: "Braking results in weight transfer _____.", a: "Forward" },
+                { num: 36, q: "Steering input to the left will result in weight transfer ___", a: "Right" },
+                { num: 37, q: "Weight transfer from side to side is known as ____", a: "Roll" },
+                { num: 38, q: "The steering technique best suited in limited space maneuvers is ___", a: "Hand over hand" },
+                { num: 39, q: "If understeer occurs, weight should be transferred to the _____", a: "Front" },
+                { num: 40, q: "Acceleration results in weight transfer to the _____", a: "Rear" },
+                { num: 41, q: "Weight transfer forward or backward is known as _____", a: "Pitch" },
+                { num: 42, q: "The steering technique best suited for maintaining vehicle balance is _____.", a: "Hand to hand" },
+                { num: 43, q: "Vehicle balance is maintained through _____.", a: "precise steering, smooth acceleration, controlled braking" },
+                { num: 44, q: "Line of sight definition", a: "is the distance you can see ahead in the direction you are looking" },
+                { num: 45, q: "The BGE mirror setting, ____", a: "Reduces blind spots and glare" },
+                { num: 46, q: "To correctly adjust the left side view mirrors, the driver will need to place his/her head against the side window.", a: "True" },
+                { num: 47, q: "When the pavement line or curb appears to run through the middle of the vehicle's hood, the vehicle is _____", a: "3-6 inches from the curb" },
+                { num: 48, q: "The vision used to judge depth and position is _____.", a: "central" },
+                { num: 49, q: "If the front bumper is 3-6 inches from the curb line, the line of sight will extend from the driver ___", a: "through the front window (near the mirror)" },
+                { num: 50, q: "Reference points are the same for all drivers.", a: "False" },
+                { num: 51, q: "In the contemporary mirror setting, the side view mirror is set to see the lane next to your vehicle", a: "True" },
+                { num: 52, q: "The BGE mirror is always the best mirror setting", a: "False" },
+                { num: 53, q: "What is the best lane position for a right turn?", a: "3" },
+                { num: 54, q: "___ are necessary to judge your vehicle's position because there are areas around the vehicle which cannot be seen from the driver's seat", a: "Reference points" },
+                { num: 55, q: "Blindzones are greatly reduced by the use of contemporary mirror settings.", a: "True" },
+                { num: 56, q: "The pavement area in front of the vehicle which cannot be seen by the driver is about 3 car lengths.", a: "False" },
+                { num: 57, q: "If there is a restriction within your line of sight, it is known as ___", a: "A closed area" },
+                { num: 58, q: "Blind spots are areas you cannot see in either your mirrors or peripheral vision", a: "True" }
+            ]
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            moduleStore.push(module2Data);
+            renderAllModules();
+        });
+
+        // Tab Switching
+        function switchTab(tab, button) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabPaste').classList.add('hidden');
+            document.getElementById('tabUpload').classList.add('hidden');
+
+            if (tab === 'paste') {
+                document.getElementById('tabPaste').classList.remove('hidden');
+            } else {
+                document.getElementById('tabUpload').classList.remove('hidden');
+            }
+            button.classList.add('active');
+        }
+
+        const PARSER_MODEL = 'HuggingFaceTB/SmolLM2-135M-Instruct';
+        let parserPipelinePromise;
+
+        function setModelStatus(message) {
+            document.querySelectorAll('.model-status').forEach(status => {
+                status.textContent = message;
+            });
+        }
+
+        async function getParserPipeline() {
+            if (!parserPipelinePromise) {
+                parserPipelinePromise = import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1').then(async ({ env, pipeline }) => {
+                    env.useBrowserCache = true;
+                    env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
+                        ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
+                        : 1;
+
+                    const progress_callback = progress => {
+                        const detail = progress.file || progress.status || 'Preparing model';
+                        const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
+                        setModelStatus(`Loading local AI ${detail}${percent}`);
+                    };
+
+                    let gpuError;
+                    if (navigator.gpu) {
+                        try {
+                            setModelStatus('Starting local AI on this device...');
+                            return await pipeline('text-generation', PARSER_MODEL, {
+                                device: 'webgpu',
+                                dtype: 'q4',
+                                progress_callback
+                            });
+                        } catch (error) {
+                            gpuError = error;
+                            setModelStatus('GPU acceleration unavailable; switching to the compatible CPU runtime...');
+                        }
+                    }
+
+                    try {
+                        return await pipeline('text-generation', PARSER_MODEL, {
+                            device: 'wasm',
+                            dtype: 'q8',
+                            progress_callback
+                        });
+                    } catch (error) {
+                        if (gpuError) {
+                            throw new Error(`GPU initialization failed (${gpuError.message}); CPU initialization failed (${error.message}).`);
+                        }
+                        throw error;
+                    }
+                }).catch(error => {
+                    parserPipelinePromise = null;
+                    throw error;
+                });
+            }
+            return parserPipelinePromise;
+        }
+
+        function getQuizletEntries(rawText, fallbackName) {
+            const cleanText = rawText.replace(/\d+\s*\/\s*\d+/g, '')
+                .replace(/Study online at https:\/\/quizlet\.com\/\S+/g, '')
+                .trim();
+            const itemRegex = /(?:^|\n)\s*(\d+)\.\s*/g;
+            const matches = [...cleanText.matchAll(itemRegex)];
+            const heading = cleanText.slice(0, matches[0]?.index ?? cleanText.length)
+                .trim().split(/\n+/).filter(Boolean).pop() || fallbackName;
+            const titleMatch = heading.match(/(?:Drivers Ed )?Module \d+/i);
+            const title = titleMatch ? titleMatch[0].trim() : heading;
+            const entries = matches.map((match, index) => {
+                const start = match.index + match[0].length;
+                const end = index + 1 < matches.length ? matches[index + 1].index : cleanText.length;
+                return {
+                    num: Number(match[1]),
+                    raw: cleanText.slice(start, end).trim()
+                };
+            }).filter(entry => entry.raw);
+
+            if (!entries.length) {
+                throw new Error('No numbered Quizlet cards were found. Include entries such as "1. Term".');
+            }
+            return { title, entries };
+        }
+
+        function finishSentence(text) {
+            const sentence = text.trim().replace(/[.!?]+$/, '');
+            return sentence ? `${sentence}.` : '';
+        }
+
+        function parseCardLocally(entry) {
+            const lines = entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean);
+            const boolIndex = lines.findIndex(line => /^(true|false)[.!]?$/i.test(line));
+            if (boolIndex !== -1) {
+                const answer = lines[boolIndex].replace(/[.!]$/, '').toLowerCase();
+                const claim = lines.filter((_, index) => index !== boolIndex).join(' ').replace(/[.!?]+$/, '').trim();
+                if (claim) {
+                    const sentence = `This statement is ${answer}: ${claim}.`;
+                    return { num: entry.num, sentence, highlight: answer };
+                }
+            }
+
+            const blankIndex = lines.findIndex(line => /_{2,}|…{2,}/.test(line));
+            if (blankIndex !== -1) {
+                const answer = lines.filter((_, index) => index !== blankIndex).join(' ').trim();
+                if (answer) {
+                    const sentence = finishSentence(lines[blankIndex].replace(/_{2,}|…{2,}/g, answer));
+                    if (sentence) return { num: entry.num, sentence, highlight: answer };
+                }
+            }
+
+            if (lines.length === 2) {
+                const questionIndex = lines.findIndex(line => /\?$/.test(line));
+                if (questionIndex !== -1) {
+                    const question = lines[questionIndex].replace(/\?+$/, '').trim();
+                    const answer = lines[1 - questionIndex].trim();
+                    let sentence = '';
+                    let match = question.match(/^(?:What is|Define)\s+(?:the\s+)?(.+)$/i);
+                    if (match) sentence = finishSentence(`${match[1]} is ${answer}`);
+                    match = question.match(/^What are\s+(?:the\s+)?(.+)$/i);
+                    if (match) sentence = finishSentence(`${match[1]} are ${answer}`);
+                    match = question.match(/^What does\s+(.+?)\s+mean$/i);
+                    if (match) sentence = finishSentence(`${match[1]} means ${answer}`);
+                    if (sentence) return { num: entry.num, sentence, highlight: answer };
+                }
+
+                const definitionPrompt = lines[0].match(/^(.+?)\s+definition$/i);
+                if (definitionPrompt && /^is\s+/i.test(lines[1])) {
+                    const sentence = finishSentence(`${definitionPrompt[1]} ${lines[1]}`);
+                    return { num: entry.num, sentence, highlight: lines[1].replace(/^is\s+/i, '').replace(/[.!?]+$/, '') };
+                }
+            }
+            return null;
+        }
+
+        function preserveCard(entry) {
+            const text = entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean).join(' — ');
+            return { num: entry.num, sentence: finishSentence(text), highlight: '' };
+        }
+
+        async function parseWithModel(entries) {
+            const parser = await getParserPipeline();
+            const items = [];
+            const batchSize = 8;
+            for (let index = 0; index < entries.length; index += batchSize) {
+                const batch = entries.slice(index, index + batchSize);
+                setModelStatus(`Interpreting ${index + 1}-${index + batch.length} of ${entries.length} complex cards...`);
+                const prompt = [
+                    'Convert each numbered Quizlet card into one short, accurate declarative study sentence.',
+                    'Each card may place its answer before or after the question. Resolve blanks and true/false cards using the supplied answer.',
+                    'Do not invent facts. Preserve false statements as false rather than silently correcting them.',
+                    'Return only a JSON array of objects with num, sentence, and highlight. The highlight must be an exact phrase from sentence.',
+                    JSON.stringify(batch.map(entry => ({ num: entry.num, text: entry.raw })))
+                ].join('\n');
+                const output = await parser(prompt, {
+                    max_new_tokens: Math.min(500, 40 + batch.length * 36),
+                    do_sample: false,
+                    return_full_text: false
+                });
+                const content = output[0]?.generated_text || '';
+                const json = content.match(/\[[\s\S]*\]/);
+                if (!json) throw new Error('SmolLM could not structure these cards. Try pasting fewer cards at a time.');
+
+                let parsedBatch;
+                try {
+                    parsedBatch = JSON.parse(json[0]);
+                } catch {
+                    throw new Error('SmolLM returned invalid card data. Try pasting fewer cards at a time.');
+                }
+                if (!Array.isArray(parsedBatch)) {
+                    throw new Error('SmolLM returned an unexpected format. Please try again.');
+                }
+
+                batch.forEach((entry, batchIndex) => {
+                    const parsedItem = parsedBatch.find(item => Number(item?.num) === entry.num) || parsedBatch[batchIndex];
+                    const sentence = typeof parsedItem?.sentence === 'string' ? finishSentence(parsedItem.sentence) : '';
+                    const highlight = typeof parsedItem?.highlight === 'string' ? parsedItem.highlight.trim() : '';
+                    if (!sentence || !highlight || !sentence.toLowerCase().includes(highlight.toLowerCase())) {
+                        items.push(preserveCard(entry));
+                        return;
+                    }
+                    items.push({ num: entry.num, sentence, highlight });
+                });
+            }
+            return items;
+        }
+
+        async function parseQuizletText(rawText, fallbackName) {
+            const { title, entries } = getQuizletEntries(rawText, fallbackName);
+            const resolved = new Map();
+            const unresolved = [];
+            let modelFailure = '';
+            entries.forEach(entry => {
+                const item = parseCardLocally(entry);
+                if (item) resolved.set(entry.num, item);
+                else unresolved.push(entry);
+            });
+
+            if (unresolved.length) {
+                setModelStatus(`Parsed ${resolved.size} cards instantly; starting local AI for ${unresolved.length} complex cards...`);
+                try {
+                    const modelItems = await parseWithModel(unresolved);
+                    modelItems.forEach(item => resolved.set(item.num, item));
+                } catch (error) {
+                    unresolved.forEach(entry => resolved.set(entry.num, preserveCard(entry)));
+                    modelFailure = error instanceof Error ? error.message : String(error);
+                }
+            }
+            if (modelFailure) {
+                setModelStatus(`Local AI unavailable (${modelFailure}). All ${entries.length} cards were kept in their original wording.`);
+            } else if (!unresolved.length) {
+                setModelStatus(`Parsed ${entries.length} cards instantly on this device.`);
+            } else if ([...resolved.values()].some(item => unresolved.some(entry => entry.num === item.num && !item.highlight))) {
+                setModelStatus(`Parsed ${entries.length} cards. Local AI could not structure some cards, so their original wording was preserved.`);
+            } else {
+                setModelStatus(`Parsed ${entries.length} cards (${entries.length - unresolved.length} instantly, ${unresolved.length} with local AI).`);
+            }
+            return { title, items: entries.map(entry => resolved.get(entry.num)) };
+        }
+
+        async function handlePaste() {
+            const input = document.getElementById('pasteInput');
+            if (!input.value.trim()) return;
+            const button = document.querySelector('#tabPaste .btn-action');
+            button.disabled = true;
+            try {
+                const fallback = `Module ${moduleStore.length + 1}`;
+                const parsed = await parseQuizletText(input.value, fallback);
+                saveModule(parsed);
+                input.value = '';
+            } catch (error) {
+                setModelStatus(error.message || 'Could not parse this Quizlet text.');
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function handleFileUpload(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+            try {
+                for (const file of files) {
+                    setModelStatus(`Reading ${file.name}...`);
+                    const text = await file.text();
+                    const parsed = await parseQuizletText(text, file.name.replace(/\.txt$/i, ''));
+                    saveModule(parsed);
+                }
+            } catch (error) {
+                setModelStatus(error.message || 'Could not parse the selected file.');
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        function handleFileDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragging');
+        }
+
+        function handleFileDragLeave(event) {
+            event.currentTarget.classList.remove('dragging');
+        }
+
+        function handleFileDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragging');
+            const files = Array.from(event.dataTransfer.files || []).filter(file => /\.txt$/i.test(file.name));
+            if (!files.length) {
+                setModelStatus('Drop one or more .TXT files to import.');
+                return;
+            }
+            handleFileUpload({ target: { files, value: '' } });
+        }
+
+        function saveModule(parsedData) {
+            const existingIdx = moduleStore.findIndex(m => m.title.toLowerCase() === parsedData.title.toLowerCase());
+            if (existingIdx !== -1) {
+                moduleStore[existingIdx] = parsedData;
+            } else {
+                moduleStore.push(parsedData);
+            }
+            renderAllModules();
+        }
+
+        // Render UI Elements
+        function renderAllModules() {
+            const container = document.getElementById('modulesContainer');
+            const nav = document.getElementById('moduleNav');
+
+            container.innerHTML = '';
+            nav.innerHTML = '';
+
+            let totalQuestions = 0;
+
+            moduleStore.forEach((mod, index) => {
+                const modId = 'module-' + index;
+                totalQuestions += mod.items.length;
+
+                // Nav list element
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="#${modId}"><span>${escapeHtml(mod.title)}</span><span class="badge-count">${mod.items.length}</span></a>`;
+                nav.appendChild(li);
+
+                // Card Element
+                const card = document.createElement('div');
+                card.className = 'module-card';
+                card.id = modId;
+
+                const studyItems = mod.items.map(item => {
+                    const sentence = item.sentence || `${item.q?.replace(/[?.!]+$/, '') || ''}${item.a ? `: ${item.a}.` : ''}`;
+                    const highlight = item.highlight || item.a || '';
+                    const escapedSentence = escapeHtml(sentence);
+                    const escapedHighlight = escapeHtml(highlight);
+                    const highlightedSentence = escapedHighlight
+                        ? escapedSentence.replace(new RegExp(escapedHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '<mark>$&</mark>')
+                        : escapedSentence;
+                    return `<li data-search="${escapeHtml(sentence.toLowerCase())}"><span>${highlightedSentence}</span></li>`;
+                }).join('');
+
+                card.innerHTML = `
+                    <h2>${escapeHtml(mod.title)}</h2>
+                    <ol class="study-list">${studyItems}</ol>
+                `;
+                container.appendChild(card);
+            });
+
+            // Update stats
+            document.getElementById('statModules').innerText = moduleStore.length;
+            document.getElementById('statQuestions').innerText = totalQuestions;
+
+            filterSearch();
+        }
+
+        // Filter Logic
+        function filterSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.module-card');
+
+            cards.forEach(card => {
+                const rows = card.querySelectorAll('.study-list li');
+                let matchesInCard = false;
+
+                rows.forEach(row => {
+                    const text = row.dataset.search;
+                    if (text.includes(query)) {
+                        row.classList.remove('hidden');
+                        matchesInCard = true;
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                });
+
+                if (matchesInCard) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
