@@ -1,0 +1,1068 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100vh" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid meet" role="application" aria-labelledby="title description"><title id="title">Drivers Ed Study Hub launcher</title><desc id="description">Open the interactive study hub in a new browser tab.</desc><metadata id="app-source">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Drivers Ed Master Study Hub&lt;/title&gt;
+    &lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+    &lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+    &lt;link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"&gt;
+    &lt;style&gt;
+        :root {
+            --sidebar-width: 300px;
+            --primary: #6f8f63;
+            --primary-hover: #5c7852;
+            --bg-main: #f5f4f0;
+            --card-bg: #fffefa;
+            --border: #e3e1d9;
+            --text-dark: #20231f;
+            --text-muted: #777a72;
+            --accent-bg: #efeee8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        button, input, textarea {
+            font: inherit;
+        }
+
+        /* SIDEBAR STYLING */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Search Input */
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--card-bg);
+            color: var(--text-dark);
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Quizlet Quick Links */
+        .quick-links {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .quick-links h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .quizlet-btn {
+            display: block;
+            text-align: center;
+            padding: 6px 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .quizlet-btn:hover {
+            background: var(--primary);
+            color: #fffefa;
+            border-color: var(--primary);
+        }
+
+        /* Tab Control for Adding Content */
+        .tab-container {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card-bg);
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: var(--accent-bg);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab-content {
+            padding: 12px;
+        }
+
+        /* File Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            background: var(--card-bg);
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: var(--accent-bg);
+        }
+
+        .upload-area p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        #fileInput { display: none; }
+
+        /* Paste Box */
+        #pasteInput {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 8px;
+            background: var(--card-bg);
+            color: var(--text-dark);
+        }
+
+        .btn-action {
+            width: 100%;
+            background: var(--primary);
+            color: #fffefa;
+            border: none;
+            padding: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Navigation List */
+        .nav-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .module-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .module-list a {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 6px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .module-list a:hover {
+            background: var(--accent-bg);
+            color: var(--primary);
+        }
+
+        .badge-count {
+            background: var(--accent-bg);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 32px;
+            max-width: 1200px;
+        }
+
+        /* Top Banner Stats */
+        .top-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid var(--border);
+            border-radius: 0;
+            padding: 8px 0 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-group {
+            display: flex;
+            gap: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-item .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .stat-item .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Module Card &amp; Tables */
+        .module-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+
+        .module-card h2 {
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .study-list {
+            list-style: none;
+            counter-reset: study-item;
+        }
+
+        .study-list li {
+            counter-increment: study-item;
+            position: relative;
+            padding: 12px 8px 12px 42px;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.6;
+        }
+
+        .study-list li::before {
+            content: counter(study-item, decimal-leading-zero);
+            position: absolute;
+            left: 8px;
+            top: 13px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .study-question {
+            display: block;
+            font-weight: 600;
+        }
+
+        .study-answer {
+            display: block;
+            margin-top: 4px;
+            padding-left: 12px;
+            border-left: 2px solid var(--border);
+            color: #42463f;
+        }
+
+        .study-list li:nth-child(even) {         background: #f8f7f3; }
+
+        mark {
+            background: #e4eddd;
+            color: #263923;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
+        ::selection { background: #dce8d5; color: #263923; }
+
+        .model-status {
+            min-height: 1rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .module-card { animation: arrive 0.28s ease-out both; }
+            @keyframes arrive {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+
+        @media (max-width: 760px) {
+            body { display: block; }
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+                padding: 20px 16px;
+            }
+            .top-banner {
+                align-items: flex-start;
+                gap: 16px;
+                padding: 16px;
+            }
+            .stat-group { gap: 16px; }
+            .module-card { padding: 18px 14px; }
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;!-- SIDEBAR --&gt;
+    &lt;aside class="sidebar"&gt;
+        &lt;div class="sidebar-header"&gt;
+            &lt;h2&gt;Drivers Ed Hub&lt;/h2&gt;
+            &lt;p&gt;Comprehensive Study Answer Key&lt;/p&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Search Input --&gt;
+        &lt;div class="search-box"&gt;
+            &lt;input type="text" id="searchInput" placeholder="Search study notes..." oninput="filterSearch()"&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Quizlet Direct Links --&gt;
+        &lt;div class="quick-links"&gt;
+            &lt;h3&gt;Quizlet Direct Links&lt;/h3&gt;
+            &lt;div class="link-grid"&gt;
+                &lt;a href="https://quizlet.com/126461449/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn"&gt;Module 2 ↗&lt;/a&gt;
+                &lt;a href="https://quizlet.com/126731738/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn"&gt;Module 3 ↗&lt;/a&gt;
+                &lt;a href="https://quizlet.com/126732227/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn"&gt;Module 4 ↗&lt;/a&gt;
+                &lt;a href="https://quizlet.com/126981466/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn"&gt;Module 5 ↗&lt;/a&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Tabbed Input Panel --&gt;
+        &lt;div class="tab-container"&gt;
+            &lt;div class="tab-buttons"&gt;
+                &lt;button class="tab-btn active" onclick="switchTab('paste', this)"&gt;Paste Text&lt;/button&gt;
+                &lt;button class="tab-btn" onclick="switchTab('upload', this)"&gt;Upload .TXT&lt;/button&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Paste Tab --&gt;
+            &lt;div id="tabPaste" class="tab-content"&gt;
+                &lt;textarea id="pasteInput" placeholder="Copy text from Quizlet and paste it here..."&gt;&lt;/textarea&gt;
+                &lt;button class="btn-action" onclick="handlePaste()"&gt;+ Parse &amp; Add Module&lt;/button&gt;
+                &lt;p class="model-status" id="modelStatus" role="status" aria-live="polite"&gt;&lt;/p&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Upload Tab --&gt;
+            &lt;div id="tabUpload" class="tab-content hidden"&gt;
+                &lt;div class="upload-area" onclick="document.getElementById('fileInput').click()"&gt;
+                    &lt;strong&gt;+ Choose .TXT File&lt;/strong&gt;
+                    &lt;p&gt;Click or drag file here&lt;/p&gt;
+                    &lt;input type="file" id="fileInput" accept=".txt" multiple onchange="handleFileUpload(event)"&gt;
+                &lt;/div&gt;
+                &lt;p class="model-status" id="uploadStatus" role="status" aria-live="polite"&gt;&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Loaded Modules Navigation --&gt;
+        &lt;nav class="nav-section"&gt;
+            &lt;h3&gt;Loaded Modules&lt;/h3&gt;
+            &lt;ul class="module-list" id="moduleNav"&gt;&lt;/ul&gt;
+        &lt;/nav&gt;
+    &lt;/aside&gt;
+
+    &lt;!-- MAIN CONTENT --&gt;
+    &lt;main class="main-content"&gt;
+        &lt;!-- Dashboard Top Banner --&gt;
+        &lt;div class="top-banner"&gt;
+            &lt;div&gt;
+                &lt;h1 style="font-size: 1.4rem;"&gt;Master Answer Key&lt;/h1&gt;
+                &lt;p style="font-size: 0.85rem; color: var(--text-muted);"&gt;Easily searchable database across all study modules&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;div class="stat-group"&gt;
+                &lt;div class="stat-item"&gt;
+                    &lt;span class="value" id="statModules"&gt;0&lt;/span&gt;
+                    &lt;span class="label"&gt;Modules&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class="stat-item"&gt;
+                    &lt;span class="value" id="statQuestions"&gt;0&lt;/span&gt;
+                    &lt;span class="label"&gt;Questions&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Modules Container --&gt;
+        &lt;div id="modulesContainer"&gt;&lt;/div&gt;
+    &lt;/main&gt;
+
+    &lt;script&gt;
+        const moduleStore = [];
+
+        // Preloaded Module 2 Data
+        const module2Data = {
+            title: "Drivers Ed Module 2",
+            items: [
+                { num: 1, q: "Correct procedure for securing a vehicle: stop, set parking brake, place gear selector in park, turn off accessories, turn ignition off, lock ignition and remove key, remove occupant restraints, check traffic and exit vehicle, secure doors", a: "True" },
+                { num: 2, q: "The side view mirrors should be adjusted to the contemporary (BGE) mirror setting, which means the driver can see _____", a: "the vehicles in the lanes beside his/her vehicle" },
+                { num: 3, q: "Driving with the hands in the 8 o'clock and 4 o'clock position _____", a: "reduces excessive steering. helps protect the driver from airbag injuries improves vehicle stability" },
+                { num: 4, q: "The driver should set accessories before putting the vehicle in drive.", a: "True" },
+                { num: 5, q: "Tire pressure should be checked _____", a: "weekly" },
+                { num: 6, q: "When the mirrors are set correctly, there is no need to check blind zones.", a: "False" },
+                { num: 7, q: "The oil should be changed every _____", a: "3000-5000 miles" },
+                { num: 8, q: "The lap belt should be adjusted to fit snugly _____", a: "across the hips" },
+                { num: 9, q: "When seated properly, the driver's chin should be above the steering wheel", a: "True" },
+                { num: 10, q: "To adjust the side view mirror for the BGE mirror setting, the driver should sit in the driving position", a: "False" },
+                { num: 11, q: "Locking the door ensures that they will not fly open during a crash.", a: "False" },
+                { num: 12, q: "When seated properly, the driver should be at least _____ inches from the steering wheel.", a: "10" },
+                { num: 13, q: "The steering wheel should be adjusted upward towards the face", a: "False" },
+                { num: 14, q: "___ is the routine care you give your vehicle is outlined in the owner's manual includes checking fluids", a: "Preventative maintenance" },
+                { num: 15, q: "When using the accelerator and brake pedal, the heel of the foot should remain on the floor.", a: "True" },
+                { num: 16, q: "The head restraint should be adjusted", a: "Just above the ears" },
+                { num: 17, q: "The rearview mirror should be adjusted to frame the back windshield.", a: "True" },
+                { num: 18, q: "All vehicles have adjustable head restraints.", a: "False" },
+                { num: 19, q: "The turn signal will always cancel after a turn.", a: "False" },
+                { num: 20, q: "The horn should NOT be used to ____", a: "Show Anger" },
+                { num: 21, q: "Head restraints are designed to help reduce _____.", a: "Whip lash injuries" },
+                { num: 22, q: "When the daytime running lights are in use, the tail lights are not on", a: "True" },
+                { num: 23, q: "Cruise control guidelines", a: "allows a driver to select and travel at a set speed / works at speeds above 25 mph / should not be used on slippery surfaces" },
+                { num: 24, q: "Position one on the ignition switch allows you to use accessories with the engine off.", a: "True" },
+                { num: 25, q: "Pedal extensions are available to allow short drivers to maintain a safe distance from the steering wheel.", a: "True" },
+                { num: 26, q: "Gears below drive, provide more engine power", a: "True" },
+                { num: 27, q: "Safety experts recommend the use of headlights whenever the vehicle is moving", a: "True" },
+                { num: 28, q: "When backing, the driver should turn the steering wheel to the right in order to back to the left.", a: "False" },
+                { num: 29, q: "When securing the vehicle, the parking brake should be set before placing the vehicle in Park.", a: "True" },
+                { num: 30, q: "If the driver needs to adjust the defroster, he/she should place the steering hand at the top of the steering wheel temporarily", a: "False" },
+                { num: 31, q: "Braking just short of lockup is known as _____.", a: "Threshold Braking" },
+                { num: 32, q: "Ideal vehicle balance is reached when _____.", a: "The Vehicle is stationary" },
+                { num: 33, q: "If your vehicle is not equipped with ABS, hard controlled braking should be done _____", a: "Prior to evasive steering" },
+                { num: 34, q: "One hand steering is recommended _____", a: "When backing" },
+                { num: 35, q: "Braking results in weight transfer _____.", a: "Forward" },
+                { num: 36, q: "Steering input to the left will result in weight transfer ___", a: "Right" },
+                { num: 37, q: "Weight transfer from side to side is known as ____", a: "Roll" },
+                { num: 38, q: "The steering technique best suited in limited space maneuvers is ___", a: "Hand over hand" },
+                { num: 39, q: "If understeer occurs, weight should be transferred to the _____", a: "Front" },
+                { num: 40, q: "Acceleration results in weight transfer to the _____", a: "Rear" },
+                { num: 41, q: "Weight transfer forward or backward is known as _____", a: "Pitch" },
+                { num: 42, q: "The steering technique best suited for maintaining vehicle balance is _____.", a: "Hand to hand" },
+                { num: 43, q: "Vehicle balance is maintained through _____.", a: "precise steering, smooth acceleration, controlled braking" },
+                { num: 44, q: "Line of sight definition", a: "is the distance you can see ahead in the direction you are looking" },
+                { num: 45, q: "The BGE mirror setting, ____", a: "Reduces blind spots and glare" },
+                { num: 46, q: "To correctly adjust the left side view mirrors, the driver will need to place his/her head against the side window.", a: "True" },
+                { num: 47, q: "When the pavement line or curb appears to run through the middle of the vehicle's hood, the vehicle is _____", a: "3-6 inches from the curb" },
+                { num: 48, q: "The vision used to judge depth and position is _____.", a: "central" },
+                { num: 49, q: "If the front bumper is 3-6 inches from the curb line, the line of sight will extend from the driver ___", a: "through the front window (near the mirror)" },
+                { num: 50, q: "Reference points are the same for all drivers.", a: "False" },
+                { num: 51, q: "In the contemporary mirror setting, the side view mirror is set to see the lane next to your vehicle", a: "True" },
+                { num: 52, q: "The BGE mirror is always the best mirror setting", a: "False" },
+                { num: 53, q: "What is the best lane position for a right turn?", a: "3" },
+                { num: 54, q: "___ are necessary to judge your vehicle's position because there are areas around the vehicle which cannot be seen from the driver's seat", a: "Reference points" },
+                { num: 55, q: "Blindzones are greatly reduced by the use of contemporary mirror settings.", a: "True" },
+                { num: 56, q: "The pavement area in front of the vehicle which cannot be seen by the driver is about 3 car lengths.", a: "False" },
+                { num: 57, q: "If there is a restriction within your line of sight, it is known as ___", a: "A closed area" },
+                { num: 58, q: "Blind spots are areas you cannot see in either your mirrors or peripheral vision", a: "True" }
+            ]
+        };
+
+        window.addEventListener('DOMContentLoaded', () =&gt; {
+            moduleStore.push(module2Data);
+            renderAllModules();
+        });
+
+        // Tab Switching
+        function switchTab(tab, button) {
+            document.querySelectorAll('.tab-btn').forEach(btn =&gt; btn.classList.remove('active'));
+            document.getElementById('tabPaste').classList.add('hidden');
+            document.getElementById('tabUpload').classList.add('hidden');
+
+            if (tab === 'paste') {
+                document.getElementById('tabPaste').classList.remove('hidden');
+            } else {
+                document.getElementById('tabUpload').classList.remove('hidden');
+            }
+            button.classList.add('active');
+        }
+
+        const PARSER_MODEL = 'HuggingFaceTB/SmolLM2-135M-Instruct';
+        const PARSER_REVISION = '12fd25f77366fa6b3b4b768ec3050bf629380bac';
+        const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2';
+        const ONNX_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0-dev.20250409-89f8206ba4/dist/';
+        let parserPipelinePromise;
+
+        function setModelStatus(message) {
+            document.querySelectorAll('.model-status').forEach(status =&gt; {
+                status.textContent = message;
+            });
+        }
+
+        async function getParserPipeline() {
+            if (!parserPipelinePromise) {
+                parserPipelinePromise = (async () =&gt; {
+                    let transformers;
+                    try {
+                        transformers = await import(TRANSFORMERS_URL);
+                    } catch (error) {
+                        throw new Error(`Could not load Transformers.js from jsDelivr (${error.message}). Check the network or allow cdn.jsdelivr.net.`);
+                    }
+
+                    const { env, pipeline } = transformers;
+                    env.useBrowserCache = true;
+                    env.allowRemoteModels = true;
+                    env.backends.onnx.wasm.wasmPaths = ONNX_WASM_URL;
+                    env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
+                        ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
+                        : 1;
+
+                    const progress_callback = progress =&gt; {
+                        const detail = progress.file || progress.status || 'Preparing model';
+                        const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
+                        setModelStatus(`Loading local AI ${detail}${percent}`);
+                    };
+                    const candidates = [];
+                    if (navigator.gpu) {
+                        try {
+                            const adapter = await navigator.gpu.requestAdapter();
+                            if (adapter) {
+                                candidates.push({ device: 'webgpu', dtype: 'q4f16', modelFile: 'model_q4f16.onnx' });
+                            } else {
+                                setModelStatus('No compatible GPU adapter; using the local CPU model...');
+                            }
+                        } catch (error) {
+                            setModelStatus(`GPU unavailable (${error.message}); using the local CPU model...`);
+                        }
+                    }
+                    candidates.push({ device: 'wasm', dtype: 'q8', modelFile: 'model_quantized.onnx' });
+                    let lastError;
+
+                    for (const candidate of candidates) {
+                        let assetWarning = '';
+                        try {
+                            setModelStatus(`Checking ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'} model and runtime access...`);
+                            await verifyParserAssets(candidate.modelFile, candidate.device === 'webgpu');
+                        } catch (error) {
+                            assetWarning = error.message;
+                            setModelStatus(`Asset check failed; trying cached ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'} model/runtime...`);
+                        }
+
+                        try {
+                            setModelStatus(`Starting local AI on ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'}...`);
+                            return await pipeline('text-generation', PARSER_MODEL, {
+                                revision: PARSER_REVISION,
+                                device: candidate.device,
+                                dtype: candidate.dtype,
+                                progress_callback
+                            });
+                        } catch (error) {
+                            lastError = new Error(assetWarning
+                                ? `${assetWarning}; model initialization failed: ${error.message}`
+                                : error.message);
+                            if (candidate.device === 'webgpu') {
+                                setModelStatus(`GPU initialization failed (${lastError.message}); switching to CPU...`);
+                            }
+                        }
+                    }
+
+                    throw new Error(`Local AI could not initialize: ${lastError?.message || 'No supported runtime was available.'}`);
+                })().catch(error =&gt; {
+                    parserPipelinePromise = null;
+                    throw error;
+                });
+            }
+            return parserPipelinePromise;
+        }
+
+        async function verifyParserAssets(modelFile, useGpu) {
+            const modelBase = `https://huggingface.co/${PARSER_MODEL}/resolve/${PARSER_REVISION}`;
+            const assets = [
+                ['SmolLM model config', `${modelBase}/config.json`],
+                ['SmolLM model weights', `${modelBase}/onnx/${modelFile}`],
+                ['ONNX Runtime WebAssembly', `${ONNX_WASM_URL}ort-wasm-simd-threaded${useGpu ? '.jsep' : ''}.wasm`]
+            ];
+            const failures = await Promise.all(assets.map(async ([name, url]) =&gt; {
+                const controller = new AbortController();
+                const timeout = setTimeout(() =&gt; controller.abort(), 8000);
+                try {
+                    const response = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal });
+                    return response.ok ? '' : `${name} returned HTTP ${response.status} from ${url}`;
+                } catch (error) {
+                    const hint = name.startsWith('SmolLM')
+                        ? ' Open the SVG directly in a modern browser, allow access to huggingface.co, and try again.'
+                        : ' Allow access to cdn.jsdelivr.net and try again.';
+                    return `Cannot reach ${name} at ${url} (${error.message}).${hint}`;
+                } finally {
+                    clearTimeout(timeout);
+                }
+            }));
+            const failedAssets = failures.filter(Boolean);
+            if (failedAssets.length) throw new Error(failedAssets.join('; '));
+        }
+
+        function getQuizletEntries(rawText, fallbackName) {
+            const cleanText = rawText.replace(/\d+\s*\/\s*\d+/g, '')
+                .replace(/Study online at https:\/\/quizlet\.com\/\S+/g, '')
+                .trim();
+            const itemRegex = /(?:^|\n)\s*(\d+)\.\s*/g;
+            const matches = [...cleanText.matchAll(itemRegex)];
+            const heading = cleanText.slice(0, matches[0]?.index ?? cleanText.length)
+                .trim().split(/\n+/).filter(Boolean).pop() || fallbackName;
+            const titleMatch = heading.match(/(?:Drivers Ed )?Module \d+/i);
+            const title = titleMatch ? titleMatch[0].trim() : heading;
+            const entries = matches.map((match, index) =&gt; {
+                const start = match.index + match[0].length;
+                const end = index + 1 &lt; matches.length ? matches[index + 1].index : cleanText.length;
+                return {
+                    num: Number(match[1]),
+                    raw: cleanText.slice(start, end).trim()
+                };
+            }).filter(entry =&gt; entry.raw);
+
+            if (!entries.length) {
+                throw new Error('No numbered Quizlet cards were found. Include entries such as "1. Term".');
+            }
+            return { title, entries };
+        }
+
+        function splitAnswerHighlights(answer) {
+            return [...new Set(answer
+                .split(/\s*(?:\/|;|\n|•)\s*/)
+                .map(point =&gt; point.trim())
+                .filter(Boolean))];
+        }
+
+        function getHighlightPhrases(answer, suggestions) {
+            const suggestedPhrases = Array.isArray(suggestions)
+                ? suggestions.filter(phrase =&gt; typeof phrase === 'string' &amp;&amp; phraseOccursInAnswer(answer, phrase))
+                : [];
+            const answerPoints = splitAnswerHighlights(answer);
+            const hasMultiplePoints = answerPoints.length &gt; 1;
+            const phrases = suggestedPhrases.length ? suggestedPhrases : answerPoints;
+            return [...new Set([...phrases, ...(hasMultiplePoints ? answerPoints : [])])];
+        }
+
+        function parseCardLocally(entry) {
+            const tabSeparated = entry.raw.split(/\t+/).map(line =&gt; line.trim()).filter(Boolean);
+            if (tabSeparated.length &gt;= 2) {
+                const question = tabSeparated.shift().replace(/^(?:question|prompt|term)\s*:\s*/i, '');
+                const answer = tabSeparated.join(' ').replace(/^(?:answer|definition|response)\s*:\s*/i, '');
+                if (question &amp;&amp; answer) {
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+                }
+            }
+
+            const lines = entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean);
+            const labeledQuestion = lines.findIndex(line =&gt; /^(?:question|prompt|term)\s*:/i.test(line));
+            const labeledAnswer = lines.findIndex(line =&gt; /^(?:answer|definition|response)\s*:/i.test(line));
+            if (labeledQuestion !== -1 &amp;&amp; labeledAnswer !== -1) {
+                const question = lines[labeledQuestion].replace(/^(?:question|prompt|term)\s*:/i, '').trim();
+                const answer = lines[labeledAnswer].replace(/^(?:answer|definition|response)\s*:/i, '').trim();
+                if (question &amp;&amp; answer) {
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+                }
+            }
+
+            const inlineQuestion = entry.raw.match(/^(.+?\?)\s+(.+)$/);
+            if (inlineQuestion) {
+                const question = inlineQuestion[1].trim();
+                const answer = inlineQuestion[2].trim();
+                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+            }
+
+            const boolIndex = lines.findIndex(line =&gt; /^(true|false)[.!]?$/i.test(line));
+            if (boolIndex !== -1) {
+                const answer = lines[boolIndex].replace(/[.!]$/, '').toLowerCase();
+                const question = lines.filter((_, index) =&gt; index !== boolIndex).join(' ').trim();
+                if (question) {
+                    return { num: entry.num, question, answer, highlights: [answer] };
+                }
+            }
+
+            const blankIndex = lines.findIndex(line =&gt; /_{2,}|…{2,}|\.{3,}/.test(line));
+            if (blankIndex !== -1) {
+                const question = lines[blankIndex];
+                const answer = lines.filter((_, index) =&gt; index !== blankIndex).join(' ').trim();
+                if (answer) {
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+                }
+            }
+
+            if (lines.length &lt; 2) return null;
+
+            const questionIndex = lines.findIndex(line =&gt;
+                /\?$/.test(line) || /^(?:what|which|who|where|when|why|how|define|identify|name|list|explain)\b/i.test(line)
+            );
+            const selectedQuestion = questionIndex === -1 ? 0 : questionIndex;
+            const question = lines[selectedQuestion];
+            const answer = lines.filter((_, index) =&gt; index !== selectedQuestion).join(' ').trim();
+            if (question &amp;&amp; answer) {
+                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+            }
+            return null;
+        }
+
+        function preserveCard(entry) {
+            return {
+                num: entry.num,
+                question: entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean).join(' '),
+                answer: '',
+                highlights: []
+            };
+        }
+
+        function normalizedSourceText(text) {
+            return text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+        }
+
+        function phraseOccursInAnswer(answer, phrase) {
+            const normalizedAnswer = normalizedSourceText(answer);
+            const normalizedPhrase = normalizedSourceText(phrase);
+            return normalizedPhrase &amp;&amp; (` ${normalizedAnswer} `).includes(` ${normalizedPhrase} `);
+        }
+
+        async function parseWithModel(entries) {
+            const parser = await getParserPipeline();
+            const items = [];
+            const batchSize = 4;
+            for (let index = 0; index &lt; entries.length; index += batchSize) {
+                const batch = entries.slice(index, index + batchSize);
+                setModelStatus(`Interpreting ${index + 1}-${index + batch.length} of ${entries.length} complex cards...`);
+                const prompt = [
+                    'Separate each Quizlet card into one question and its answer. Keep each pair together as one card.',
+                    'Copy the question and answer from the card text; do not paraphrase, omit facts, combine different cards, or invent details.',
+                    'For true/false cards, keep the claim as question and true/false as answer. For fill-in-the-blank cards, keep the original blank in the question and put its supplied answer in answer.',
+                    'Return only a JSON array of objects with num, question, answer, and highlights.',
+                    'highlights must contain every answer point as exact phrases copied from answer. Split slash-, semicolon-, and bullet-separated answer points into separate highlights.',
+                    JSON.stringify(batch.map(entry =&gt; ({ num: entry.num, text: entry.raw })))
+                ].join('\n');
+                const output = await parser([{ role: 'user', content: prompt }], {
+                    max_new_tokens: Math.min(384, Math.ceil(48 + batch.reduce((count, entry) =&gt; count + entry.raw.length, 0) / 4)),
+                    do_sample: false,
+                });
+                const generated = output[0]?.generated_text;
+                const content = typeof generated === 'string'
+                    ? generated
+                    : Array.isArray(generated)
+                        ? generated.at(-1)?.content || ''
+                        : '';
+                const json = content.match(/\[[\s\S]*\]/);
+                let parsedBatch = [];
+                if (json) {
+                    try {
+                        parsedBatch = JSON.parse(json[0]);
+                    } catch {
+                        parsedBatch = [];
+                    }
+                }
+
+                batch.forEach((entry, batchIndex) =&gt; {
+                    const parsedItem = Array.isArray(parsedBatch)
+                        ? parsedBatch.find(item =&gt; Number(item?.num) === entry.num) || parsedBatch[batchIndex]
+                        : null;
+                    const question = typeof parsedItem?.question === 'string' ? parsedItem.question.trim() : '';
+                    const answer = typeof parsedItem?.answer === 'string' ? parsedItem.answer.trim() : '';
+                    const source = normalizedSourceText(entry.raw);
+                    const questionIsSource = question &amp;&amp; (` ${source} `).includes(` ${normalizedSourceText(question)} `);
+                    const answerIsSource = answer &amp;&amp; (` ${source} `).includes(` ${normalizedSourceText(answer)} `);
+                    if (!questionIsSource || !answerIsSource) {
+                        items.push(preserveCard(entry));
+                        return;
+                    }
+                    items.push({
+                        num: entry.num,
+                        question,
+                        answer,
+                        highlights: getHighlightPhrases(answer, parsedItem?.highlights)
+                    });
+                });
+            }
+            return items;
+        }
+
+        async function parseQuizletText(rawText, fallbackName) {
+            const { title, entries } = getQuizletEntries(rawText, fallbackName);
+            const resolved = new Map();
+            const unresolved = [];
+            let modelError = '';
+            entries.forEach(entry =&gt; {
+                const item = parseCardLocally(entry);
+                if (item) resolved.set(entry.num, item);
+                else unresolved.push(entry);
+            });
+
+            if (unresolved.length) {
+                setModelStatus(`Paired ${resolved.size} cards locally; using on-device AI for ${unresolved.length} complex cards...`);
+                try {
+                    const modelItems = await parseWithModel(unresolved);
+                    modelItems.forEach(item =&gt; resolved.set(item.num, item));
+                } catch (error) {
+                    modelError = error instanceof Error ? error.message : String(error);
+                    unresolved.forEach(entry =&gt; resolved.set(entry.num, preserveCard(entry)));
+                }
+            }
+            if (modelError) {
+                setModelStatus(`AI could not interpret some cards (${modelError}); all source cards were kept together.`);
+            } else {
+                const aiFallbackCount = [...resolved.values()].filter(item =&gt; !item.answer).length;
+                setModelStatus(aiFallbackCount
+                    ? `Kept all ${entries.length} cards together; ${aiFallbackCount} could not be separated safely and remain in their original wording.`
+                    : `Paired all ${entries.length} question-and-answer cards without splitting them.`);
+            }
+            return { title, items: entries.map(entry =&gt; resolved.get(entry.num)) };
+        }
+
+        async function handlePaste() {
+            const input = document.getElementById('pasteInput');
+            if (!input.value.trim()) return;
+            const button = document.querySelector('#tabPaste .btn-action');
+            button.disabled = true;
+            try {
+                const fallback = `Module ${moduleStore.length + 1}`;
+                const parsed = await parseQuizletText(input.value, fallback);
+                saveModule(parsed);
+                input.value = '';
+            } catch (error) {
+                setModelStatus(error.message || 'Could not parse this Quizlet text.');
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function handleFileUpload(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+            try {
+                for (const file of files) {
+                    setModelStatus(`Reading ${file.name}...`);
+                    const text = await file.text();
+                    const parsed = await parseQuizletText(text, file.name.replace(/\.txt$/i, ''));
+                    saveModule(parsed);
+                }
+            } catch (error) {
+                setModelStatus(error.message || 'Could not parse the selected file.');
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        function saveModule(parsedData) {
+            const existingIdx = moduleStore.findIndex(m =&gt; m.title.toLowerCase() === parsedData.title.toLowerCase());
+            if (existingIdx !== -1) {
+                moduleStore[existingIdx] = parsedData;
+            } else {
+                moduleStore.push(parsedData);
+            }
+            renderAllModules();
+        }
+
+        // Render UI Elements
+        function renderAllModules() {
+            const container = document.getElementById('modulesContainer');
+            const nav = document.getElementById('moduleNav');
+
+            container.innerHTML = '';
+            nav.innerHTML = '';
+
+            let totalQuestions = 0;
+
+            moduleStore.forEach((mod, index) =&gt; {
+                const modId = 'module-' + index;
+                totalQuestions += mod.items.length;
+
+                // Nav list element
+                const li = document.createElement('li');
+                li.innerHTML = `&lt;a href="#${modId}"&gt;&lt;span&gt;${escapeHtml(mod.title)}&lt;/span&gt;&lt;span class="badge-count"&gt;${mod.items.length}&lt;/span&gt;&lt;/a&gt;`;
+                nav.appendChild(li);
+
+                // Card Element
+                const card = document.createElement('div');
+                card.className = 'module-card';
+                card.id = modId;
+
+                const studyItems = mod.items.map(item =&gt; {
+                    const question = item.question || item.q || item.sentence || '';
+                    const answer = item.answer || item.a || '';
+                    const searchableText = `${question} ${answer}`.toLowerCase();
+                    const questionHtml = escapeHtml(question);
+                    const highlights = item.highlights?.length ? item.highlights : item.highlight || answer;
+                    const answerHtml = answer
+                        ? `&lt;span class="study-answer"&gt;${highlightImportantText(answer, highlights)}&lt;/span&gt;`
+                        : '';
+                    return `&lt;li data-search="${escapeHtml(searchableText)}"&gt;&lt;span class="study-question"&gt;${questionHtml}&lt;/span&gt;${answerHtml}&lt;/li&gt;`;
+                }).join('');
+
+                card.innerHTML = `
+                    &lt;h2&gt;${escapeHtml(mod.title)}&lt;/h2&gt;
+                    &lt;ol class="study-list"&gt;${studyItems}&lt;/ol&gt;
+                `;
+                container.appendChild(card);
+            });
+
+            // Update stats
+            document.getElementById('statModules').innerText = moduleStore.length;
+            document.getElementById('statQuestions').innerText = totalQuestions;
+
+            filterSearch();
+        }
+
+        // Filter Logic
+        function filterSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.module-card');
+
+            cards.forEach(card =&gt; {
+                const rows = card.querySelectorAll('.study-list li');
+                let matchesInCard = false;
+
+                rows.forEach(row =&gt; {
+                    const text = row.dataset.search;
+                    if (text.includes(query)) {
+                        row.classList.remove('hidden');
+                        matchesInCard = true;
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                });
+
+                if (matchesInCard) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function highlightImportantText(text, highlights) {
+            const phrases = (Array.isArray(highlights) ? highlights : [highlights])
+                .filter(phrase =&gt; typeof phrase === 'string' &amp;&amp; phrase.trim())
+                .map(phrase =&gt; phrase.trim())
+                .sort((left, right) =&gt; right.length - left.length);
+            if (!phrases.length) return escapeHtml(text);
+
+            const markedPhrases = new Set(phrases.map(phrase =&gt; phrase.toLowerCase()));
+            const pattern = new RegExp(`(${phrases.map(phrase =&gt; phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&amp;')).join('|')})`, 'gi');
+            return text.split(pattern).map(part =&gt; markedPhrases.has(part.toLowerCase())
+                ? `&lt;mark&gt;${escapeHtml(part)}&lt;/mark&gt;`
+                : escapeHtml(part)).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&amp;/g, "&amp;amp;")
+                      .replace(/&lt;/g, "&amp;lt;")
+                      .replace(/&gt;/g, "&amp;gt;")
+                      .replace(/"/g, "&amp;quot;")
+                      .replace(/'/g, "&amp;#039;");
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</metadata><style>text { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.background { fill: #f8fafc; }
+.card { fill: #fff; stroke: #e2e8f0; stroke-width: 1.5; }
+.title { fill: #0f172a; font-size: 30px; font-weight: 700; }
+.copy { fill: #64748b; font-size: 16px; }
+.button { fill: #2563eb; cursor: pointer; }
+.button:hover { fill: #1d4ed8; }
+.button:focus { stroke: #93c5fd; stroke-width: 4; }
+.button-label { fill: #fff; font-size: 16px; font-weight: 650; pointer-events: none; }
+.status { fill: #64748b; font-size: 13px; }</style><rect class="background" width="1440" height="900" /><rect class="card" x="410" y="310" width="620" height="280" rx="16" /><text class="title" x="720" y="390" text-anchor="middle">Drivers Ed Study Hub</text><text class="copy" x="720" y="430" text-anchor="middle">Launch the interactive study app in a new tab.</text><g id="launch-button" role="button" tabindex="0" aria-label="Launch study hub in a new tab" onclick="launchApp()" onkeydown="if (event.key === &quot;Enter&quot; || event.key === &quot; &quot;) { event.preventDefault(); launchApp(); }"><rect class="button" x="565" y="466" width="310" height="54" rx="9" /><text class="button-label" x="720" y="500" text-anchor="middle">Open study hub</text></g><text id="status" class="status" x="720" y="555" text-anchor="middle" role="status" aria-live="polite">If the tab does not open, allow pop-ups and try again.</text><script>function launchApp() {
+  const appWindow = window.open("about:blank", "_blank");
+  if (!appWindow) {
+    document.getElementById("status").textContent =
+      "Pop-up blocked. Allow pop-ups for this page, then try again.";
+    return;
+  }
+  appWindow.opener = null;
+  appWindow.document.open();
+  appWindow.document.write(document.getElementById("app-source").textContent);
+  appWindow.document.close();
+  document.getElementById("status").textContent =
+    "Study hub opened in a new tab.";
+}</script></svg>

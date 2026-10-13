@@ -10,14 +10,14 @@
     <style>
         :root {
             --sidebar-width: 300px;
-            --primary: #171717;
-            --primary-hover: #404040;
-            --bg-main: #fafafa;
-            --card-bg: #ffffff;
-            --border: #e5e5e5;
-            --text-dark: #171717;
-            --text-muted: #737373;
-            --accent-bg: #f5f5f5;
+            --primary: #6f8f63;
+            --primary-hover: #5c7852;
+            --bg-main: #f5f4f0;
+            --card-bg: #fffefa;
+            --border: #e3e1d9;
+            --text-dark: #20231f;
+            --text-muted: #777a72;
+            --accent-bg: #efeee8;
         }
 
         * {
@@ -72,10 +72,12 @@
             width: 100%;
             padding: 10px 14px;
             font-size: 0.9rem;
-            border: 2px solid var(--border);
+            border: 1px solid var(--border);
             border-radius: 8px;
             outline: none;
             transition: border-color 0.2s;
+            background: var(--card-bg);
+            color: var(--text-dark);
         }
 
         .search-box input:focus {
@@ -84,7 +86,7 @@
 
         /* Quizlet Quick Links */
         .quick-links {
-            background: var(--accent-bg);
+            background: transparent;
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 12px;
@@ -108,7 +110,7 @@
             display: block;
             text-align: center;
             padding: 6px 8px;
-            background: #ffffff;
+            background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--primary);
@@ -120,7 +122,7 @@
 
         .quizlet-btn:hover {
             background: var(--primary);
-            color: #ffffff;
+            color: #fffefa;
             border-color: var(--primary);
         }
 
@@ -129,13 +131,13 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: hidden;
-            background: #ffffff;
+            background: var(--card-bg);
         }
 
         .tab-buttons {
             display: flex;
             border-bottom: 1px solid var(--border);
-            background: #f5f5f5;
+            background: var(--accent-bg);
         }
 
         .tab-btn {
@@ -150,7 +152,7 @@
         }
 
         .tab-btn.active {
-            background: #ffffff;
+            background: var(--card-bg);
             color: var(--primary);
             border-bottom: 2px solid var(--primary);
         }
@@ -165,7 +167,7 @@
             border-radius: 6px;
             padding: 12px;
             text-align: center;
-            background: #fafafa;
+            background: var(--card-bg);
             cursor: pointer;
         }
 
@@ -192,12 +194,14 @@
             resize: vertical;
             outline: none;
             margin-bottom: 8px;
+            background: var(--card-bg);
+            color: var(--text-dark);
         }
 
         .btn-action {
             width: 100%;
             background: var(--primary);
-            color: #ffffff;
+            color: #fffefa;
             border: none;
             padding: 8px;
             font-size: 0.85rem;
@@ -244,7 +248,7 @@
         }
 
         .badge-count {
-            background: #f0f0f0;
+            background: var(--accent-bg);
             color: var(--text-muted);
             font-size: 0.75rem;
             padding: 2px 6px;
@@ -264,10 +268,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px 24px;
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid var(--border);
+            border-radius: 0;
+            padding: 8px 0 20px;
             margin-bottom: 24px;
         }
 
@@ -284,7 +289,7 @@
         .stat-item .value {
             font-size: 1.4rem;
             font-weight: 700;
-            color: var(--primary);
+            color: var(--text-dark);
         }
 
         .stat-item .label {
@@ -341,26 +346,22 @@
         .study-answer {
             display: block;
             margin-top: 4px;
-            color: #404040;
+            padding-left: 12px;
+            border-left: 2px solid var(--border);
+            color: #42463f;
         }
 
-        .answer-label {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            margin-right: 6px;
-        }
-
-        .study-list li:nth-child(even) { background: #fcfcfc; }
+        .study-list li:nth-child(even) {         background: #f8f7f3; }
 
         mark {
-            background: #e5e5e5;
-            color: #111111;
+            background: #e4eddd;
+            color: #263923;
             font-weight: 700;
-            padding: 1px 3px;
-            border-radius: 3px;
+            padding: 1px 4px;
+            border-radius: 2px;
         }
+
+        ::selection { background: #dce8d5; color: #263923; }
 
         .model-status {
             min-height: 1rem;
@@ -370,6 +371,14 @@
         }
 
         .hidden { display: none !important; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .module-card { animation: arrive 0.28s ease-out both; }
+            @keyframes arrive {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
 
         @media (max-width: 760px) {
             body { display: block; }
@@ -599,7 +608,18 @@
                         setModelStatus(`Loading local AI ${detail}${percent}`);
                     };
                     const candidates = [];
-                    if (navigator.gpu) candidates.push({ device: 'webgpu', dtype: 'q4f16', modelFile: 'model_q4f16.onnx' });
+                    if (navigator.gpu) {
+                        try {
+                            const adapter = await navigator.gpu.requestAdapter();
+                            if (adapter) {
+                                candidates.push({ device: 'webgpu', dtype: 'q4f16', modelFile: 'model_q4f16.onnx' });
+                            } else {
+                                setModelStatus('No compatible GPU adapter; using the local CPU model...');
+                            }
+                        } catch (error) {
+                            setModelStatus(`GPU unavailable (${error.message}); using the local CPU model...`);
+                        }
+                    }
                     candidates.push({ device: 'wasm', dtype: 'q8', modelFile: 'model_quantized.onnx' });
                     let lastError;
 
@@ -654,7 +674,10 @@
                     const response = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal });
                     return response.ok ? '' : `${name} returned HTTP ${response.status} from ${url}`;
                 } catch (error) {
-                    return `Cannot reach ${name} at ${url} (${error.message})`;
+                    const hint = name.startsWith('SmolLM')
+                        ? ' Open the SVG directly in a modern browser, allow access to huggingface.co, and try again.'
+                        : ' Allow access to cdn.jsdelivr.net and try again.';
+                    return `Cannot reach ${name} at ${url} (${error.message}).${hint}`;
                 } finally {
                     clearTimeout(timeout);
                 }
@@ -724,6 +747,13 @@
                 if (question && answer) {
                     return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
                 }
+            }
+
+            const inlineQuestion = entry.raw.match(/^(.+?\?)\s+(.+)$/);
+            if (inlineQuestion) {
+                const question = inlineQuestion[1].trim();
+                const answer = inlineQuestion[2].trim();
+                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
             }
 
             const boolIndex = lines.findIndex(line => /^(true|false)[.!]?$/i.test(line));
@@ -943,7 +973,7 @@
                     const questionHtml = escapeHtml(question);
                     const highlights = item.highlights?.length ? item.highlights : item.highlight || answer;
                     const answerHtml = answer
-                        ? `<span class="study-answer"><span class="answer-label">ANSWER</span>${highlightImportantText(answer, highlights)}</span>`
+                        ? `<span class="study-answer">${highlightImportantText(answer, highlights)}</span>`
                         : '';
                     return `<li data-search="${escapeHtml(searchableText)}"><span class="study-question">${questionHtml}</span>${answerHtml}</li>`;
                 }).join('');
