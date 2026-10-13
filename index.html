@@ -6,7 +6,7 @@
     <title>Drivers Ed Master Study Hub</title>
     <style>
         :root {
-            --sidebar-width: 300px;
+            --sidebar-width: 340px;
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
             --bg-main: #f8fafc;
@@ -46,6 +46,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.03);
             z-index: 100;
             overflow-y: auto;
         }
@@ -169,11 +170,6 @@
             background: var(--accent-bg);
         }
 
-        .upload-area.dragging {
-            border-color: var(--primary);
-            background: var(--accent-bg);
-        }
-
         .upload-area p {
             font-size: 0.75rem;
             color: var(--text-muted);
@@ -208,11 +204,6 @@
 
         .btn-action:hover {
             background: var(--primary-hover);
-        }
-
-        .btn-action:disabled {
-            cursor: wait;
-            opacity: 0.7;
         }
 
         /* Navigation List */
@@ -305,6 +296,7 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
 
         .module-card h2 {
@@ -356,27 +348,6 @@
         }
 
         .hidden { display: none !important; }
-
-        @media (max-width: 760px) {
-            body { display: block; }
-            .sidebar {
-                position: static;
-                width: 100%;
-                height: auto;
-                border-right: 0;
-                border-bottom: 1px solid var(--border);
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 20px 16px;
-            }
-            .top-banner {
-                align-items: flex-start;
-                gap: 16px;
-                padding: 16px;
-            }
-            .stat-group { gap: 16px; }
-        }
     </style>
 </head>
 <body>
@@ -397,33 +368,33 @@
         <div class="quick-links">
             <h3>Quizlet Direct Links</h3>
             <div class="link-grid">
-                    <a href="https://quizlet.com/126461449/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 2 ↗</a>
-                    <a href="https://quizlet.com/126731738/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 3 ↗</a>
-                    <a href="https://quizlet.com/126732227/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 4 ↗</a>
-                    <a href="https://quizlet.com/126981466/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 5 ↗</a>
+                <a href="https://quizlet.com/126461449/print" target="_blank" class="quizlet-btn">Module 2 ↗</a>
+                <a href="https://quizlet.com/126731738/print" target="_blank" class="quizlet-btn">Module 3 ↗</a>
+                <a href="https://quizlet.com/126732227/print" target="_blank" class="quizlet-btn">Module 4 ↗</a>
+                <a href="https://quizlet.com/126981466/print" target="_blank" class="quizlet-btn">Module 5 ↗</a>
             </div>
         </div>
 
         <!-- Tabbed Input Panel -->
         <div class="tab-container">
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('paste', this)">Paste Text</button>
-                <button class="tab-btn" onclick="switchTab('upload', this)">Upload .TXT</button>
+                <button class="tab-btn active" onclick="switchTab('paste')">Paste Text</button>
+                <button class="tab-btn" onclick="switchTab('upload')">Upload .TXT</button>
             </div>
 
             <!-- Paste Tab -->
             <div id="tabPaste" class="tab-content">
                 <textarea id="pasteInput" placeholder="Copy text from Quizlet and paste it here..."></textarea>
                 <button class="btn-action" onclick="handlePaste()">+ Parse & Add Module</button>
-                <p class="model-status" id="modelStatus" role="status" aria-live="polite">Simple cards parse instantly. Complex cards use on-device AI; its first use downloads the model.</p>
+                <p class="model-status" id="modelStatus" role="status" aria-live="polite"></p>
             </div>
 
             <!-- Upload Tab -->
             <div id="tabUpload" class="tab-content hidden">
-                <div class="upload-area" onclick="document.getElementById('fileInput').click()" ondragover="handleFileDragOver(event)" ondragleave="handleFileDragLeave(event)" ondrop="handleFileDrop(event)">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
                     <strong>+ Choose .TXT File</strong>
                     <p>Click or drag file here</p>
-                    <input type="file" id="fileInput" accept=".txt" multiple onclick="event.stopPropagation()" onchange="handleFileUpload(event)">
+                    <input type="file" id="fileInput" accept=".txt" multiple onchange="handleFileUpload(event)">
                 </div>
                 <p class="model-status" id="uploadStatus" role="status" aria-live="polite"></p>
             </div>
@@ -534,17 +505,18 @@
         });
 
         // Tab Switching
-        function switchTab(tab, button) {
+        function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tabPaste').classList.add('hidden');
             document.getElementById('tabUpload').classList.add('hidden');
 
             if (tab === 'paste') {
                 document.getElementById('tabPaste').classList.remove('hidden');
+                event.target.classList.add('active');
             } else {
                 document.getElementById('tabUpload').classList.remove('hidden');
+                event.target.classList.add('active');
             }
-            button.classList.add('active');
         }
 
         const PARSER_MODEL = 'HuggingFaceTB/SmolLM2-135M-Instruct';
@@ -563,40 +535,15 @@
                     env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
                         ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
                         : 1;
-
-                    const progress_callback = progress => {
-                        const detail = progress.file || progress.status || 'Preparing model';
-                        const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
-                        setModelStatus(`Loading local AI ${detail}${percent}`);
-                    };
-
-                    let gpuError;
-                    if (navigator.gpu) {
-                        try {
-                            setModelStatus('Starting local AI on this device...');
-                            return await pipeline('text-generation', PARSER_MODEL, {
-                                device: 'webgpu',
-                                dtype: 'q4',
-                                progress_callback
-                            });
-                        } catch (error) {
-                            gpuError = error;
-                            setModelStatus('GPU acceleration unavailable; switching to the compatible CPU runtime...');
+                    return pipeline('text-generation', PARSER_MODEL, {
+                        device: 'wasm',
+                        dtype: 'q8',
+                        progress_callback: progress => {
+                            const detail = progress.file || progress.status || 'Preparing model';
+                            const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
+                            setModelStatus(`Loading SmolLM ${detail}${percent}`);
                         }
-                    }
-
-                    try {
-                        return await pipeline('text-generation', PARSER_MODEL, {
-                            device: 'wasm',
-                            dtype: 'q8',
-                            progress_callback
-                        });
-                    } catch (error) {
-                        if (gpuError) {
-                            throw new Error(`GPU initialization failed (${gpuError.message}); CPU initialization failed (${error.message}).`);
-                        }
-                        throw error;
-                    }
+                    });
                 }).catch(error => {
                     parserPipelinePromise = null;
                     throw error;
@@ -680,11 +627,6 @@
             return null;
         }
 
-        function preserveCard(entry) {
-            const text = entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean).join(' — ');
-            return { num: entry.num, sentence: finishSentence(text), highlight: '' };
-        }
-
         async function parseWithModel(entries) {
             const parser = await getParserPipeline();
             const items = [];
@@ -719,12 +661,11 @@
                 }
 
                 batch.forEach((entry, batchIndex) => {
-                    const parsedItem = parsedBatch.find(item => Number(item?.num) === entry.num) || parsedBatch[batchIndex];
+                    const parsedItem = parsedBatch.find(item => Number(item.num) === entry.num) || parsedBatch[batchIndex];
                     const sentence = typeof parsedItem?.sentence === 'string' ? finishSentence(parsedItem.sentence) : '';
                     const highlight = typeof parsedItem?.highlight === 'string' ? parsedItem.highlight.trim() : '';
                     if (!sentence || !highlight || !sentence.toLowerCase().includes(highlight.toLowerCase())) {
-                        items.push(preserveCard(entry));
-                        return;
+                        throw new Error(`SmolLM could not format card ${entry.num}. Please try adding the module again.`);
                     }
                     items.push({ num: entry.num, sentence, highlight });
                 });
@@ -736,7 +677,6 @@
             const { title, entries } = getQuizletEntries(rawText, fallbackName);
             const resolved = new Map();
             const unresolved = [];
-            let modelFailure = '';
             entries.forEach(entry => {
                 const item = parseCardLocally(entry);
                 if (item) resolved.set(entry.num, item);
@@ -744,24 +684,11 @@
             });
 
             if (unresolved.length) {
-                setModelStatus(`Parsed ${resolved.size} cards instantly; starting local AI for ${unresolved.length} complex cards...`);
-                try {
-                    const modelItems = await parseWithModel(unresolved);
-                    modelItems.forEach(item => resolved.set(item.num, item));
-                } catch (error) {
-                    unresolved.forEach(entry => resolved.set(entry.num, preserveCard(entry)));
-                    modelFailure = error instanceof Error ? error.message : String(error);
-                }
+                setModelStatus(`Parsed ${resolved.size} cards locally; loading SmolLM for ${unresolved.length} complex cards...`);
+                const modelItems = await parseWithModel(unresolved);
+                modelItems.forEach(item => resolved.set(item.num, item));
             }
-            if (modelFailure) {
-                setModelStatus(`Local AI unavailable (${modelFailure}). All ${entries.length} cards were kept in their original wording.`);
-            } else if (!unresolved.length) {
-                setModelStatus(`Parsed ${entries.length} cards instantly on this device.`);
-            } else if ([...resolved.values()].some(item => unresolved.some(entry => entry.num === item.num && !item.highlight))) {
-                setModelStatus(`Parsed ${entries.length} cards. Local AI could not structure some cards, so their original wording was preserved.`);
-            } else {
-                setModelStatus(`Parsed ${entries.length} cards (${entries.length - unresolved.length} instantly, ${unresolved.length} with local AI).`);
-            }
+            setModelStatus(`Parsed ${entries.length} cards (${resolved.size - unresolved.length} locally, ${unresolved.length} with SmolLM).`);
             return { title, items: entries.map(entry => resolved.get(entry.num)) };
         }
 
@@ -799,26 +726,6 @@
             }
         }
 
-        function handleFileDragOver(event) {
-            event.preventDefault();
-            event.currentTarget.classList.add('dragging');
-        }
-
-        function handleFileDragLeave(event) {
-            event.currentTarget.classList.remove('dragging');
-        }
-
-        function handleFileDrop(event) {
-            event.preventDefault();
-            event.currentTarget.classList.remove('dragging');
-            const files = Array.from(event.dataTransfer.files || []).filter(file => /\.txt$/i.test(file.name));
-            if (!files.length) {
-                setModelStatus('Drop one or more .TXT files to import.');
-                return;
-            }
-            handleFileUpload({ target: { files, value: '' } });
-        }
-
         function saveModule(parsedData) {
             const existingIdx = moduleStore.findIndex(m => m.title.toLowerCase() === parsedData.title.toLowerCase());
             if (existingIdx !== -1) {
@@ -833,7 +740,7 @@
         function renderAllModules() {
             const container = document.getElementById('modulesContainer');
             const nav = document.getElementById('moduleNav');
-
+            
             container.innerHTML = '';
             nav.innerHTML = '';
 
@@ -854,8 +761,8 @@
                 card.id = modId;
 
                 const studyItems = mod.items.map(item => {
-                    const sentence = item.sentence || `${item.q?.replace(/[?.!]+$/, '') || ''}${item.a ? `: ${item.a}.` : ''}`;
-                    const highlight = item.highlight || item.a || '';
+                    const sentence = item.sentence || `${item.q.replace(/[?.!]+$/, '')}: ${item.a}.`;
+                    const highlight = item.highlight || item.a;
                     const escapedSentence = escapeHtml(sentence);
                     const escapedHighlight = escapeHtml(highlight);
                     const highlightedSentence = escapedHighlight
