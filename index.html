@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drivers Ed Master Study Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --sidebar-width: 340px;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-main: #f8fafc;
+            --sidebar-width: 300px;
+            --primary: #171717;
+            --primary-hover: #404040;
+            --bg-main: #fafafa;
             --card-bg: #ffffff;
-            --border: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --accent-bg: #eff6ff;
+            --border: #e5e5e5;
+            --text-dark: #171717;
+            --text-muted: #737373;
+            --accent-bg: #f5f5f5;
         }
 
         * {
@@ -26,11 +27,15 @@
         }
 
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             background-color: var(--bg-main);
             color: var(--text-dark);
             display: flex;
             min-height: 100vh;
+        }
+
+        button, input, textarea {
+            font: inherit;
         }
 
         /* SIDEBAR STYLING */
@@ -46,7 +51,6 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.03);
             z-index: 100;
             overflow-y: auto;
         }
@@ -81,7 +85,7 @@
         /* Quizlet Quick Links */
         .quick-links {
             background: var(--accent-bg);
-            border: 1px solid #bfdbfe;
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 12px;
         }
@@ -105,7 +109,7 @@
             text-align: center;
             padding: 6px 8px;
             background: #ffffff;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--primary);
             text-decoration: none;
@@ -131,7 +135,7 @@
         .tab-buttons {
             display: flex;
             border-bottom: 1px solid var(--border);
-            background: #f1f5f9;
+            background: #f5f5f5;
         }
 
         .tab-btn {
@@ -161,7 +165,7 @@
             border-radius: 6px;
             padding: 12px;
             text-align: center;
-            background: #f8fafc;
+            background: #fafafa;
             cursor: pointer;
         }
 
@@ -240,7 +244,7 @@
         }
 
         .badge-count {
-            background: #e2e8f0;
+            background: #f0f0f0;
             color: var(--text-muted);
             font-size: 0.75rem;
             padding: 2px 6px;
@@ -296,7 +300,6 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 28px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
 
         .module-card h2 {
@@ -314,27 +317,46 @@
 
         .study-list li {
             counter-increment: study-item;
-            display: grid;
-            grid-template-columns: 2.5rem minmax(0, 1fr);
-            gap: 10px;
-            padding: 12px 8px;
+            position: relative;
+            padding: 12px 8px 12px 42px;
             border-bottom: 1px solid var(--border);
             line-height: 1.6;
         }
 
         .study-list li::before {
             content: counter(study-item, decimal-leading-zero);
+            position: absolute;
+            left: 8px;
+            top: 13px;
             color: var(--text-muted);
             font-size: 0.8rem;
             font-weight: 700;
-            padding-top: 2px;
         }
 
-        .study-list li:nth-child(even) { background: #fafafa; }
+        .study-question {
+            display: block;
+            font-weight: 600;
+        }
+
+        .study-answer {
+            display: block;
+            margin-top: 4px;
+            color: #404040;
+        }
+
+        .answer-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            margin-right: 6px;
+        }
+
+        .study-list li:nth-child(even) { background: #fcfcfc; }
 
         mark {
-            background: #fef08a;
-            color: #713f12;
+            background: #e5e5e5;
+            color: #111111;
             font-weight: 700;
             padding: 1px 3px;
             border-radius: 3px;
@@ -348,6 +370,29 @@
         }
 
         .hidden { display: none !important; }
+
+        @media (max-width: 760px) {
+            body { display: block; }
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+                padding: 20px 16px;
+            }
+            .top-banner {
+                align-items: flex-start;
+                gap: 16px;
+                padding: 16px;
+            }
+            .stat-group { gap: 16px; }
+            .module-card { padding: 18px 14px; }
+        }
     </style>
 </head>
 <body>
@@ -368,18 +413,18 @@
         <div class="quick-links">
             <h3>Quizlet Direct Links</h3>
             <div class="link-grid">
-                <a href="https://quizlet.com/126461449/print" target="_blank" class="quizlet-btn">Module 2 ↗</a>
-                <a href="https://quizlet.com/126731738/print" target="_blank" class="quizlet-btn">Module 3 ↗</a>
-                <a href="https://quizlet.com/126732227/print" target="_blank" class="quizlet-btn">Module 4 ↗</a>
-                <a href="https://quizlet.com/126981466/print" target="_blank" class="quizlet-btn">Module 5 ↗</a>
+                <a href="https://quizlet.com/126461449/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 2 ↗</a>
+                <a href="https://quizlet.com/126731738/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 3 ↗</a>
+                <a href="https://quizlet.com/126732227/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 4 ↗</a>
+                <a href="https://quizlet.com/126981466/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 5 ↗</a>
             </div>
         </div>
 
         <!-- Tabbed Input Panel -->
         <div class="tab-container">
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('paste')">Paste Text</button>
-                <button class="tab-btn" onclick="switchTab('upload')">Upload .TXT</button>
+                <button class="tab-btn active" onclick="switchTab('paste', this)">Paste Text</button>
+                <button class="tab-btn" onclick="switchTab('upload', this)">Upload .TXT</button>
             </div>
 
             <!-- Paste Tab -->
@@ -505,21 +550,23 @@
         });
 
         // Tab Switching
-        function switchTab(tab) {
+        function switchTab(tab, button) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tabPaste').classList.add('hidden');
             document.getElementById('tabUpload').classList.add('hidden');
 
             if (tab === 'paste') {
                 document.getElementById('tabPaste').classList.remove('hidden');
-                event.target.classList.add('active');
             } else {
                 document.getElementById('tabUpload').classList.remove('hidden');
-                event.target.classList.add('active');
             }
+            button.classList.add('active');
         }
 
         const PARSER_MODEL = 'HuggingFaceTB/SmolLM2-135M-Instruct';
+        const PARSER_REVISION = '12fd25f77366fa6b3b4b768ec3050bf629380bac';
+        const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2';
+        const ONNX_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0-dev.20250409-89f8206ba4/dist/';
         let parserPipelinePromise;
 
         function setModelStatus(message) {
@@ -530,26 +577,90 @@
 
         async function getParserPipeline() {
             if (!parserPipelinePromise) {
-                parserPipelinePromise = import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1').then(async ({ env, pipeline }) => {
+                parserPipelinePromise = (async () => {
+                    let transformers;
+                    try {
+                        transformers = await import(TRANSFORMERS_URL);
+                    } catch (error) {
+                        throw new Error(`Could not load Transformers.js from jsDelivr (${error.message}). Check the network or allow cdn.jsdelivr.net.`);
+                    }
+
+                    const { env, pipeline } = transformers;
                     env.useBrowserCache = true;
+                    env.allowRemoteModels = true;
+                    env.backends.onnx.wasm.wasmPaths = ONNX_WASM_URL;
                     env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
                         ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
                         : 1;
-                    return pipeline('text-generation', PARSER_MODEL, {
-                        device: 'wasm',
-                        dtype: 'q8',
-                        progress_callback: progress => {
-                            const detail = progress.file || progress.status || 'Preparing model';
-                            const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
-                            setModelStatus(`Loading SmolLM ${detail}${percent}`);
+
+                    const progress_callback = progress => {
+                        const detail = progress.file || progress.status || 'Preparing model';
+                        const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
+                        setModelStatus(`Loading local AI ${detail}${percent}`);
+                    };
+                    const candidates = [];
+                    if (navigator.gpu) candidates.push({ device: 'webgpu', dtype: 'q4f16', modelFile: 'model_q4f16.onnx' });
+                    candidates.push({ device: 'wasm', dtype: 'q8', modelFile: 'model_quantized.onnx' });
+                    let lastError;
+
+                    for (const candidate of candidates) {
+                        let assetWarning = '';
+                        try {
+                            setModelStatus(`Checking ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'} model and runtime access...`);
+                            await verifyParserAssets(candidate.modelFile, candidate.device === 'webgpu');
+                        } catch (error) {
+                            assetWarning = error.message;
+                            setModelStatus(`Asset check failed; trying cached ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'} model/runtime...`);
                         }
-                    });
-                }).catch(error => {
+
+                        try {
+                            setModelStatus(`Starting local AI on ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'}...`);
+                            return await pipeline('text-generation', PARSER_MODEL, {
+                                revision: PARSER_REVISION,
+                                device: candidate.device,
+                                dtype: candidate.dtype,
+                                progress_callback
+                            });
+                        } catch (error) {
+                            lastError = new Error(assetWarning
+                                ? `${assetWarning}; model initialization failed: ${error.message}`
+                                : error.message);
+                            if (candidate.device === 'webgpu') {
+                                setModelStatus(`GPU initialization failed (${lastError.message}); switching to CPU...`);
+                            }
+                        }
+                    }
+
+                    throw new Error(`Local AI could not initialize: ${lastError?.message || 'No supported runtime was available.'}`);
+                })().catch(error => {
                     parserPipelinePromise = null;
                     throw error;
                 });
             }
             return parserPipelinePromise;
+        }
+
+        async function verifyParserAssets(modelFile, useGpu) {
+            const modelBase = `https://huggingface.co/${PARSER_MODEL}/resolve/${PARSER_REVISION}`;
+            const assets = [
+                ['SmolLM model config', `${modelBase}/config.json`],
+                ['SmolLM model weights', `${modelBase}/onnx/${modelFile}`],
+                ['ONNX Runtime WebAssembly', `${ONNX_WASM_URL}ort-wasm-simd-threaded${useGpu ? '.jsep' : ''}.wasm`]
+            ];
+            const failures = await Promise.all(assets.map(async ([name, url]) => {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 8000);
+                try {
+                    const response = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal });
+                    return response.ok ? '' : `${name} returned HTTP ${response.status} from ${url}`;
+                } catch (error) {
+                    return `Cannot reach ${name} at ${url} (${error.message})`;
+                } finally {
+                    clearTimeout(timeout);
+                }
+            }));
+            const failedAssets = failures.filter(Boolean);
+            if (failedAssets.length) throw new Error(failedAssets.join('; '));
         }
 
         function getQuizletEntries(rawText, fallbackName) {
@@ -577,97 +688,149 @@
             return { title, entries };
         }
 
-        function finishSentence(text) {
-            const sentence = text.trim().replace(/[.!?]+$/, '');
-            return sentence ? `${sentence}.` : '';
+        function splitAnswerHighlights(answer) {
+            return [...new Set(answer
+                .split(/\s*(?:\/|;|\n|•)\s*/)
+                .map(point => point.trim())
+                .filter(Boolean))];
+        }
+
+        function getHighlightPhrases(answer, suggestions) {
+            const suggestedPhrases = Array.isArray(suggestions)
+                ? suggestions.filter(phrase => typeof phrase === 'string' && phraseOccursInAnswer(answer, phrase))
+                : [];
+            const answerPoints = splitAnswerHighlights(answer);
+            const hasMultiplePoints = answerPoints.length > 1;
+            const phrases = suggestedPhrases.length ? suggestedPhrases : answerPoints;
+            return [...new Set([...phrases, ...(hasMultiplePoints ? answerPoints : [])])];
         }
 
         function parseCardLocally(entry) {
+            const tabSeparated = entry.raw.split(/\t+/).map(line => line.trim()).filter(Boolean);
+            if (tabSeparated.length >= 2) {
+                const question = tabSeparated.shift().replace(/^(?:question|prompt|term)\s*:\s*/i, '');
+                const answer = tabSeparated.join(' ').replace(/^(?:answer|definition|response)\s*:\s*/i, '');
+                if (question && answer) {
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+                }
+            }
+
             const lines = entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean);
+            const labeledQuestion = lines.findIndex(line => /^(?:question|prompt|term)\s*:/i.test(line));
+            const labeledAnswer = lines.findIndex(line => /^(?:answer|definition|response)\s*:/i.test(line));
+            if (labeledQuestion !== -1 && labeledAnswer !== -1) {
+                const question = lines[labeledQuestion].replace(/^(?:question|prompt|term)\s*:/i, '').trim();
+                const answer = lines[labeledAnswer].replace(/^(?:answer|definition|response)\s*:/i, '').trim();
+                if (question && answer) {
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+                }
+            }
+
             const boolIndex = lines.findIndex(line => /^(true|false)[.!]?$/i.test(line));
             if (boolIndex !== -1) {
                 const answer = lines[boolIndex].replace(/[.!]$/, '').toLowerCase();
-                const claim = lines.filter((_, index) => index !== boolIndex).join(' ').replace(/[.!?]+$/, '').trim();
-                if (claim) {
-                    const sentence = `This statement is ${answer}: ${claim}.`;
-                    return { num: entry.num, sentence, highlight: answer };
+                const question = lines.filter((_, index) => index !== boolIndex).join(' ').trim();
+                if (question) {
+                    return { num: entry.num, question, answer, highlights: [answer] };
                 }
             }
 
-            const blankIndex = lines.findIndex(line => /_{2,}|…{2,}/.test(line));
+            const blankIndex = lines.findIndex(line => /_{2,}|…{2,}|\.{3,}/.test(line));
             if (blankIndex !== -1) {
+                const question = lines[blankIndex];
                 const answer = lines.filter((_, index) => index !== blankIndex).join(' ').trim();
                 if (answer) {
-                    const sentence = finishSentence(lines[blankIndex].replace(/_{2,}|…{2,}/g, answer));
-                    if (sentence) return { num: entry.num, sentence, highlight: answer };
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
                 }
             }
 
-            if (lines.length === 2) {
-                const questionIndex = lines.findIndex(line => /\?$/.test(line));
-                if (questionIndex !== -1) {
-                    const question = lines[questionIndex].replace(/\?+$/, '').trim();
-                    const answer = lines[1 - questionIndex].trim();
-                    let sentence = '';
-                    let match = question.match(/^(?:What is|Define)\s+(?:the\s+)?(.+)$/i);
-                    if (match) sentence = finishSentence(`${match[1]} is ${answer}`);
-                    match = question.match(/^What are\s+(?:the\s+)?(.+)$/i);
-                    if (match) sentence = finishSentence(`${match[1]} are ${answer}`);
-                    match = question.match(/^What does\s+(.+?)\s+mean$/i);
-                    if (match) sentence = finishSentence(`${match[1]} means ${answer}`);
-                    if (sentence) return { num: entry.num, sentence, highlight: answer };
-                }
+            if (lines.length < 2) return null;
 
-                const definitionPrompt = lines[0].match(/^(.+?)\s+definition$/i);
-                if (definitionPrompt && /^is\s+/i.test(lines[1])) {
-                    const sentence = finishSentence(`${definitionPrompt[1]} ${lines[1]}`);
-                    return { num: entry.num, sentence, highlight: lines[1].replace(/^is\s+/i, '').replace(/[.!?]+$/, '') };
-                }
+            const questionIndex = lines.findIndex(line =>
+                /\?$/.test(line) || /^(?:what|which|who|where|when|why|how|define|identify|name|list|explain)\b/i.test(line)
+            );
+            const selectedQuestion = questionIndex === -1 ? 0 : questionIndex;
+            const question = lines[selectedQuestion];
+            const answer = lines.filter((_, index) => index !== selectedQuestion).join(' ').trim();
+            if (question && answer) {
+                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
             }
             return null;
+        }
+
+        function preserveCard(entry) {
+            return {
+                num: entry.num,
+                question: entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean).join(' '),
+                answer: '',
+                highlights: []
+            };
+        }
+
+        function normalizedSourceText(text) {
+            return text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+        }
+
+        function phraseOccursInAnswer(answer, phrase) {
+            const normalizedAnswer = normalizedSourceText(answer);
+            const normalizedPhrase = normalizedSourceText(phrase);
+            return normalizedPhrase && (` ${normalizedAnswer} `).includes(` ${normalizedPhrase} `);
         }
 
         async function parseWithModel(entries) {
             const parser = await getParserPipeline();
             const items = [];
-            const batchSize = 8;
+            const batchSize = 4;
             for (let index = 0; index < entries.length; index += batchSize) {
                 const batch = entries.slice(index, index + batchSize);
                 setModelStatus(`Interpreting ${index + 1}-${index + batch.length} of ${entries.length} complex cards...`);
                 const prompt = [
-                    'Convert each numbered Quizlet card into one short, accurate declarative study sentence.',
-                    'Each card may place its answer before or after the question. Resolve blanks and true/false cards using the supplied answer.',
-                    'Do not invent facts. Preserve false statements as false rather than silently correcting them.',
-                    'Return only a JSON array of objects with num, sentence, and highlight. The highlight must be an exact phrase from sentence.',
+                    'Separate each Quizlet card into one question and its answer. Keep each pair together as one card.',
+                    'Copy the question and answer from the card text; do not paraphrase, omit facts, combine different cards, or invent details.',
+                    'For true/false cards, keep the claim as question and true/false as answer. For fill-in-the-blank cards, keep the original blank in the question and put its supplied answer in answer.',
+                    'Return only a JSON array of objects with num, question, answer, and highlights.',
+                    'highlights must contain every answer point as exact phrases copied from answer. Split slash-, semicolon-, and bullet-separated answer points into separate highlights.',
                     JSON.stringify(batch.map(entry => ({ num: entry.num, text: entry.raw })))
                 ].join('\n');
-                const output = await parser(prompt, {
-                    max_new_tokens: Math.min(500, 40 + batch.length * 36),
+                const output = await parser([{ role: 'user', content: prompt }], {
+                    max_new_tokens: Math.min(384, Math.ceil(48 + batch.reduce((count, entry) => count + entry.raw.length, 0) / 4)),
                     do_sample: false,
-                    return_full_text: false
                 });
-                const content = output[0]?.generated_text || '';
+                const generated = output[0]?.generated_text;
+                const content = typeof generated === 'string'
+                    ? generated
+                    : Array.isArray(generated)
+                        ? generated.at(-1)?.content || ''
+                        : '';
                 const json = content.match(/\[[\s\S]*\]/);
-                if (!json) throw new Error('SmolLM could not structure these cards. Try pasting fewer cards at a time.');
-
-                let parsedBatch;
-                try {
-                    parsedBatch = JSON.parse(json[0]);
-                } catch {
-                    throw new Error('SmolLM returned invalid card data. Try pasting fewer cards at a time.');
-                }
-                if (!Array.isArray(parsedBatch)) {
-                    throw new Error('SmolLM returned an unexpected format. Please try again.');
+                let parsedBatch = [];
+                if (json) {
+                    try {
+                        parsedBatch = JSON.parse(json[0]);
+                    } catch {
+                        parsedBatch = [];
+                    }
                 }
 
                 batch.forEach((entry, batchIndex) => {
-                    const parsedItem = parsedBatch.find(item => Number(item.num) === entry.num) || parsedBatch[batchIndex];
-                    const sentence = typeof parsedItem?.sentence === 'string' ? finishSentence(parsedItem.sentence) : '';
-                    const highlight = typeof parsedItem?.highlight === 'string' ? parsedItem.highlight.trim() : '';
-                    if (!sentence || !highlight || !sentence.toLowerCase().includes(highlight.toLowerCase())) {
-                        throw new Error(`SmolLM could not format card ${entry.num}. Please try adding the module again.`);
+                    const parsedItem = Array.isArray(parsedBatch)
+                        ? parsedBatch.find(item => Number(item?.num) === entry.num) || parsedBatch[batchIndex]
+                        : null;
+                    const question = typeof parsedItem?.question === 'string' ? parsedItem.question.trim() : '';
+                    const answer = typeof parsedItem?.answer === 'string' ? parsedItem.answer.trim() : '';
+                    const source = normalizedSourceText(entry.raw);
+                    const questionIsSource = question && (` ${source} `).includes(` ${normalizedSourceText(question)} `);
+                    const answerIsSource = answer && (` ${source} `).includes(` ${normalizedSourceText(answer)} `);
+                    if (!questionIsSource || !answerIsSource) {
+                        items.push(preserveCard(entry));
+                        return;
                     }
-                    items.push({ num: entry.num, sentence, highlight });
+                    items.push({
+                        num: entry.num,
+                        question,
+                        answer,
+                        highlights: getHighlightPhrases(answer, parsedItem?.highlights)
+                    });
                 });
             }
             return items;
@@ -677,6 +840,7 @@
             const { title, entries } = getQuizletEntries(rawText, fallbackName);
             const resolved = new Map();
             const unresolved = [];
+            let modelError = '';
             entries.forEach(entry => {
                 const item = parseCardLocally(entry);
                 if (item) resolved.set(entry.num, item);
@@ -684,11 +848,23 @@
             });
 
             if (unresolved.length) {
-                setModelStatus(`Parsed ${resolved.size} cards locally; loading SmolLM for ${unresolved.length} complex cards...`);
-                const modelItems = await parseWithModel(unresolved);
-                modelItems.forEach(item => resolved.set(item.num, item));
+                setModelStatus(`Paired ${resolved.size} cards locally; using on-device AI for ${unresolved.length} complex cards...`);
+                try {
+                    const modelItems = await parseWithModel(unresolved);
+                    modelItems.forEach(item => resolved.set(item.num, item));
+                } catch (error) {
+                    modelError = error instanceof Error ? error.message : String(error);
+                    unresolved.forEach(entry => resolved.set(entry.num, preserveCard(entry)));
+                }
             }
-            setModelStatus(`Parsed ${entries.length} cards (${resolved.size - unresolved.length} locally, ${unresolved.length} with SmolLM).`);
+            if (modelError) {
+                setModelStatus(`AI could not interpret some cards (${modelError}); all source cards were kept together.`);
+            } else {
+                const aiFallbackCount = [...resolved.values()].filter(item => !item.answer).length;
+                setModelStatus(aiFallbackCount
+                    ? `Kept all ${entries.length} cards together; ${aiFallbackCount} could not be separated safely and remain in their original wording.`
+                    : `Paired all ${entries.length} question-and-answer cards without splitting them.`);
+            }
             return { title, items: entries.map(entry => resolved.get(entry.num)) };
         }
 
@@ -740,7 +916,7 @@
         function renderAllModules() {
             const container = document.getElementById('modulesContainer');
             const nav = document.getElementById('moduleNav');
-            
+
             container.innerHTML = '';
             nav.innerHTML = '';
 
@@ -761,14 +937,15 @@
                 card.id = modId;
 
                 const studyItems = mod.items.map(item => {
-                    const sentence = item.sentence || `${item.q.replace(/[?.!]+$/, '')}: ${item.a}.`;
-                    const highlight = item.highlight || item.a;
-                    const escapedSentence = escapeHtml(sentence);
-                    const escapedHighlight = escapeHtml(highlight);
-                    const highlightedSentence = escapedHighlight
-                        ? escapedSentence.replace(new RegExp(escapedHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '<mark>$&</mark>')
-                        : escapedSentence;
-                    return `<li data-search="${escapeHtml(sentence.toLowerCase())}"><span>${highlightedSentence}</span></li>`;
+                    const question = item.question || item.q || item.sentence || '';
+                    const answer = item.answer || item.a || '';
+                    const searchableText = `${question} ${answer}`.toLowerCase();
+                    const questionHtml = escapeHtml(question);
+                    const highlights = item.highlights?.length ? item.highlights : item.highlight || answer;
+                    const answerHtml = answer
+                        ? `<span class="study-answer"><span class="answer-label">ANSWER</span>${highlightImportantText(answer, highlights)}</span>`
+                        : '';
+                    return `<li data-search="${escapeHtml(searchableText)}"><span class="study-question">${questionHtml}</span>${answerHtml}</li>`;
                 }).join('');
 
                 card.innerHTML = `
@@ -812,8 +989,22 @@
             });
         }
 
+        function highlightImportantText(text, highlights) {
+            const phrases = (Array.isArray(highlights) ? highlights : [highlights])
+                .filter(phrase => typeof phrase === 'string' && phrase.trim())
+                .map(phrase => phrase.trim())
+                .sort((left, right) => right.length - left.length);
+            if (!phrases.length) return escapeHtml(text);
+
+            const markedPhrases = new Set(phrases.map(phrase => phrase.toLowerCase()));
+            const pattern = new RegExp(`(${phrases.map(phrase => phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+            return text.split(pattern).map(part => markedPhrases.has(part.toLowerCase())
+                ? `<mark>${escapeHtml(part)}</mark>`
+                : escapeHtml(part)).join('');
+        }
+
         function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;")
+            return String(str).replace(/&/g, "&amp;")
                       .replace(/</g, "&lt;")
                       .replace(/>/g, "&gt;")
                       .replace(/"/g, "&quot;")
