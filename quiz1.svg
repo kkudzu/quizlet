@@ -1027,14 +1027,23 @@
             return phrase &amp;&amp; phraseOccursInAnswer(source, phrase) ? [phrase] : [];
         }
 
-        function cardTextForDisplay(source) {
-            return source.split(/\n/)
+        function cardTextForDisplay(source, answer = '') {
+            const lines = source.split(/\n/)
                 .filter(line =&gt; !/^\s*(?:correct answer|answer key|correct option)\s*[:=-]/i.test(line))
-                .map(line =&gt; line
-                    .replace(/\s+(?:correct answer|answer key|correct option)\s*[:=-]\s*.+$/i, '')
-                    .replace(/(^|\s)(?:answer|definition|response|solution)\s*[:=-]\s*/ig, '$1'))
-                .join('\n')
-                .trim();
+                .map(line =&gt; line.replace(/\s+(?:correct answer|answer key|correct option)\s*[:=-]\s*.+$/i, ''));
+            const blankIndex = lines.findIndex(line =&gt; /_{2,}|\.{3,}|…{2,}/.test(line));
+            if (answer &amp;&amp; blankIndex !== -1) {
+                const answerIndex = lines.findIndex((line, index) =&gt; {
+                    if (index === blankIndex) return false;
+                    const unlabelled = line.replace(/^\s*(?:answer|definition|response|solution)\s*[:=-]\s*/i, '').trim();
+                    return normalizedSourceText(unlabelled) === normalizedSourceText(answer);
+                });
+                if (answerIndex !== -1) {
+                    lines[blankIndex] = lines[blankIndex].replace(/_{2,}|\.{3,}|…{2,}/, answer);
+                    lines.splice(answerIndex, 1);
+                }
+            }
+            return lines.join('\n').trim();
         }
 
         function preserveCard(entry) {
@@ -1062,7 +1071,10 @@
         function extractModelCard(content) {
             const text = String(content || '').replace(/```(?:json)?|```/gi, '');
             const start = text.indexOf('{');
-            if (start === -1) return null;
+            if (start === -1) {
+                const answerLine = text.match(/(?:correct\s+)?answer\s*(?:is|:)\s*["“]?(.+?)["”]?\s*(?:\n|$)/i);
+                return answerLine ? { answer: answerLine[1].trim() } : null;
+            }
             let depth = 0;
             let inString = false;
             let escaped = false;
@@ -1080,6 +1092,15 @@
                     try {
                         return JSON.parse(text.slice(start, index + 1));
                     } catch {
+                        const answer = text.slice(start, index + 1)
+                            .match(/"answer"\s*:\s*("(?:\\.|[^"\\])*")/i)?.[1];
+                        if (answer) {
+                            try {
+                                return { answer: JSON.parse(answer) };
+                            } catch {
+                                return null;
+                            }
+                        }
                         return null;
                     }
                 }
@@ -1095,14 +1116,18 @@
         }
 
         function resolveModelAnswer(answer, source) {
-            const letter = answer.trim().match(/^(?:option\s*)?([A-H])(?:[.)])?$/i)?.[1]?.toUpperCase();
+            const cleanedAnswer = answer.trim()
+                .replace(/^(?:(?:correct\s+)?answer|definition|response)\s*[:=-]\s*/i, '')
+                .replace(/^["“]|["”]$/g, '')
+                .trim();
+            const letter = cleanedAnswer.match(/^(?:option\s*)?([A-H])(?:[.)])?$/i)?.[1]?.toUpperCase();
             const choices = getChoiceOptions(source);
-            if (letter) return choices.find(option =&gt; option.letter === letter)?.text || answer.trim();
-            const normalizedAnswer = normalizedSourceText(answer);
+            if (letter) return choices.find(option =&gt; option.letter === letter)?.text || cleanedAnswer;
+            const normalizedAnswer = normalizedSourceText(cleanedAnswer);
             const matchingChoices = choices.filter(option =&gt;
                 phraseOccursInAnswer(option.text, normalizedAnswer)
             );
-            return matchingChoices.length === 1 ? matchingChoices[0].text : answer.trim();
+            return matchingChoices.length === 1 ? matchingChoices[0].text : cleanedAnswer;
         }
 
         const HIGHLIGHT_KINDS = new Set(['rule', 'action', 'term', 'number', 'warning', 'definition', 'fact']);
@@ -1137,13 +1162,11 @@
             const parser = await getParserPipeline();
             const items = [];
             const errors = [];
-            const systemPrompt = 'Parse each driving study card. Return only JSON: {"answer":"exact phrase","kind":"rule|action|term|number|warning|definition|fact","keywords":["related term"]}. Solve it using the card and your knowledge. Copy the full correct choice, not its letter. Add at most two short related search terms. For driver-safety questions, choose the safest legal action. No explanation.';
+            const systemPrompt = 'Parse this driving study card. Return JSON only: {"answer":"complete exact answer text","kind":"rule|action|term|number|warning|definition|fact","keywords":["related terms"]}. Solve it using the card. Copy the entire answer line or correct option exactly as printed, never a fragment or letter. Add up to two short related search terms. Pick the safest legal driving action. No explanation.';
             const examples = [
-                { role: 'user', content: 'Card: What is 2 + 2?\nA. 3\nB. 4\nC. 5' },
-                { role: 'assistant', content: '{"answer":"4","kind":"number","keywords":["addition","math"]}' },
                 { role: 'user', content: 'Card: Tire pressure should be checked _____.\nweekly' },
                 { role: 'assistant', content: '{"answer":"weekly","kind":"rule","keywords":["tire pressure","maintenance"]}' },
-                { role: 'user', content: 'Card: On a wet road, what helps maintain a safe following gap?\nA. Increase following distance\nB. Follow closely\nC. Brake hard in turns' },
+                { role: 'user', content: 'Card: On a wet road, what helps keep a safe gap?\nA. Increase following distance\nB. Follow closely\nC. Brake hard' },
                 { role: 'assistant', content: '{"answer":"Increase following distance","kind":"action","keywords":["rain","safe gap"]}' }
             ];
             for (let index = 0; index &lt; entries.length; index++) {
@@ -1155,18 +1178,37 @@
                     { role: 'user', content: `Card: ${entry.raw}` }
                 ];
                 try {
-                    const output = await parser(messages, {
-                        max_new_tokens: 48,
+                    let output = await parser(messages, {
+                        max_new_tokens: 40,
                         do_sample: false,
                     });
-                    const generated = output[0]?.generated_text;
-                    const content = typeof generated === 'string'
-                        ? generated
-                        : Array.isArray(generated)
-                            ? generated.at(-1)?.content || ''
-                            : '';
-                    const parsedItem = extractModelCard(content);
-                    items.push(validModelCard(entry, parsedItem) || preserveCard(entry));
+                    const getResponseContent = result =&gt; {
+                        const generated = result[0]?.generated_text;
+                        return typeof generated === 'string'
+                            ? generated
+                            : Array.isArray(generated)
+                                ? generated.at(-1)?.content || ''
+                                : '';
+                    };
+                    let parsedItem = extractModelCard(getResponseContent(output));
+                    let validatedItem = validModelCard(entry, parsedItem);
+                    if (!validatedItem?.answer) {
+                        setModelStatus(`Rechecking card ${index + 1} of ${entries.length} for a complete answer...`);
+                        output = await parser([
+                            ...messages,
+                            { role: 'assistant', content: getResponseContent(output) },
+                            {
+                                role: 'user',
+                                content: `Your previous reply did not contain a complete answer copied from this card. Re-read the card and return a complete answer line or full choice exactly as printed. Do not return a fragment or letter. Card: ${entry.raw}`
+                            }
+                        ], {
+                            max_new_tokens: 64,
+                            do_sample: false
+                        });
+                        parsedItem = extractModelCard(getResponseContent(output));
+                        validatedItem = validModelCard(entry, parsedItem);
+                    }
+                    items.push(validatedItem || preserveCard(entry));
                 } catch (error) {
                     const message = error instanceof Error ? error.message : String(error);
                     errors.push(`card ${entry.num}: ${message}`);
@@ -1298,7 +1340,7 @@
                     const sourceText = item.sourceText || question;
                     const searchTerms = Array.isArray(item.searchTerms) ? item.searchTerms.join(' ') : '';
                     const searchableText = normalizedSourceText(`${sourceText} ${answer} ${searchTerms} ${item.kind || ''}`);
-                    const displayText = cardTextForDisplay(sourceText);
+                    const displayText = cardTextForDisplay(sourceText, answer);
                     const highlights = answer
                         ? getHighlightPhrases(displayText, answer)
                         : [];
