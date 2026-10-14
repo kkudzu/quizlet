@@ -9,15 +9,18 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --sidebar-width: 300px;
-            --primary: #6f8f63;
-            --primary-hover: #5c7852;
-            --bg-main: #f5f4f0;
-            --card-bg: #fffefa;
-            --border: #e3e1d9;
-            --text-dark: #20231f;
-            --text-muted: #777a72;
-            --accent-bg: #efeee8;
+            --sidebar-width: 276px;
+            --primary: #17191d;
+            --primary-hover: #363a40;
+            --bg-main: #f7f8fa;
+            --card-bg: #ffffff;
+            --border: #e7e9ed;
+            --text-dark: #17191d;
+            --text-muted: #737983;
+            --accent-bg: #f1f3f5;
+            --highlight-blue: #d6e9ff;
+            --highlight-green: #dffcc6;
+            --highlight-purple: #e0daff;
         }
 
         * {
@@ -47,33 +50,27 @@
             height: 100vh;
             background: var(--card-bg);
             border-right: 1px solid var(--border);
-            padding: 20px 16px;
+            padding: 28px 18px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
             z-index: 100;
             overflow-y: auto;
         }
 
         .sidebar-header h2 {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--text-dark);
-        }
-
-        .sidebar-header p {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 2px;
         }
 
         /* Search Input */
         .search-box input {
             width: 100%;
-            padding: 10px 14px;
-            font-size: 0.9rem;
+            padding: 10px 12px;
+            font-size: 0.8rem;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 4px;
             outline: none;
             transition: border-color 0.2s;
             background: var(--card-bg);
@@ -81,55 +78,55 @@
         }
 
         .search-box input:focus {
-            border-color: var(--primary);
+            border-color: #aeb4bd;
         }
 
         /* Quizlet Quick Links */
         .quick-links {
             background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
+            border: 0;
+            border-radius: 0;
+            padding: 0;
         }
 
         .quick-links h3 {
-            font-size: 0.75rem;
+            font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: var(--primary);
-            margin-bottom: 8px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
         }
 
         .link-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            gap: 8px;
         }
 
         .quizlet-btn {
             display: block;
             text-align: center;
-            padding: 6px 8px;
+            padding: 7px 8px;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--primary);
+            border-radius: 4px;
+            color: var(--text-dark);
             text-decoration: none;
             font-size: 0.8rem;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: background-color 0.15s;
         }
 
         .quizlet-btn:hover {
-            background: var(--primary);
-            color: #fffefa;
-            border-color: var(--primary);
+            background: var(--accent-bg);
+            color: var(--text-dark);
+            border-color: var(--border);
         }
 
         /* Tab Control for Adding Content */
         .tab-container {
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 5px;
             overflow: hidden;
             background: var(--card-bg);
         }
@@ -137,13 +134,13 @@
         .tab-buttons {
             display: flex;
             border-bottom: 1px solid var(--border);
-            background: var(--accent-bg);
+            background: #f6f7f8;
         }
 
         .tab-btn {
             flex: 1;
             padding: 8px;
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             font-weight: 600;
             border: none;
             background: none;
@@ -154,7 +151,7 @@
         .tab-btn.active {
             background: var(--card-bg);
             color: var(--primary);
-            border-bottom: 2px solid var(--primary);
+            border-bottom: 1px solid var(--primary);
         }
 
         .tab-content {
@@ -164,7 +161,7 @@
         /* File Upload Area */
         .upload-area {
             border: 2px dashed var(--border);
-            border-radius: 6px;
+            border-radius: 4px;
             padding: 12px;
             text-align: center;
             background: var(--card-bg);
@@ -190,7 +187,7 @@
             padding: 8px;
             font-size: 0.8rem;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 4px;
             resize: vertical;
             outline: none;
             margin-bottom: 8px;
@@ -201,12 +198,12 @@
         .btn-action {
             width: 100%;
             background: var(--primary);
-            color: #fffefa;
+            color: #ffffff;
             border: none;
-            padding: 8px;
-            font-size: 0.85rem;
+            padding: 9px;
+            font-size: 0.75rem;
             font-weight: 600;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
         }
 
@@ -216,7 +213,7 @@
 
         /* Navigation List */
         .nav-section h3 {
-            font-size: 0.75rem;
+            font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-muted);
@@ -234,11 +231,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 10px;
-            border-radius: 6px;
+            padding: 7px 8px;
+            border-radius: 4px;
             color: var(--text-dark);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 500;
         }
 
@@ -259,8 +256,8 @@
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
-            padding: 32px;
-            max-width: 1200px;
+            padding: 44px clamp(28px, 5vw, 72px);
+            max-width: 1440px;
         }
 
         /* Top Banner Stats */
@@ -272,8 +269,8 @@
             border: 0;
             border-bottom: 1px solid var(--border);
             border-radius: 0;
-            padding: 8px 0 20px;
-            margin-bottom: 24px;
+            padding: 0 0 20px;
+            margin-bottom: 28px;
         }
 
         .stat-group {
@@ -287,32 +284,45 @@
         }
 
         .stat-item .value {
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--text-dark);
         }
 
         .stat-item .label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
+        .page-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.04em;
+        }
+
+        .page-description {
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
         /* Module Card & Tables */
         .module-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 28px;
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid var(--border);
+            border-radius: 0;
+            padding: 0 0 28px;
+            margin-bottom: 36px;
         }
 
         .module-card h2 {
-            font-size: 1.3rem;
+            font-size: 1rem;
             color: var(--text-dark);
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--border);
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
 
         .study-list {
@@ -323,7 +333,7 @@
         .study-list li {
             counter-increment: study-item;
             position: relative;
-            padding: 12px 8px 12px 42px;
+            padding: 14px 8px 14px 38px;
             border-bottom: 1px solid var(--border);
             line-height: 1.6;
         }
@@ -332,36 +342,39 @@
             content: counter(study-item, decimal-leading-zero);
             position: absolute;
             left: 8px;
-            top: 13px;
+            top: 16px;
             color: var(--text-muted);
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.68rem;
+            font-weight: 500;
         }
 
         .study-question {
             display: block;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .study-answer {
             display: block;
             margin-top: 4px;
             padding-left: 12px;
-            border-left: 2px solid var(--border);
-            color: #42463f;
+            border-left: 1px solid var(--border);
+            color: #555b63;
         }
 
-        .study-list li:nth-child(even) {         background: #f8f7f3; }
+        .study-list li:nth-child(even) { background: transparent; }
 
         mark {
-            background: #e4eddd;
-            color: #263923;
-            font-weight: 700;
-            padding: 1px 4px;
+            background: var(--highlight-blue);
+            color: #0b3266;
+            font-weight: 600;
+            padding: 1px 3px;
             border-radius: 2px;
         }
 
-        ::selection { background: #dce8d5; color: #263923; }
+        mark.highlight-tone-1 { background: var(--highlight-green); color: #256400; }
+        mark.highlight-tone-2 { background: var(--highlight-purple); color: #503f91; }
+
+        ::selection { background: #d6e9ff; color: #17191d; }
 
         .model-status {
             min-height: 1rem;
@@ -369,6 +382,81 @@
             font-size: 0.75rem;
             line-height: 1.4;
         }
+
+        .model-progress {
+            display: block;
+            width: 100%;
+            height: 2px;
+            margin-top: 6px;
+            border: 0;
+            border-radius: 2px;
+            overflow: hidden;
+            background: var(--border);
+            accent-color: #1c77ff;
+        }
+
+        .model-progress::-webkit-progress-bar { background: var(--border); }
+        .model-progress::-webkit-progress-value { background: #1c77ff; }
+        .model-progress::-moz-progress-bar { background: #1c77ff; }
+
+        .app-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            background: var(--bg-main);
+            transition: opacity 180ms ease, visibility 180ms ease;
+        }
+
+        .app-loader[aria-hidden="true"] {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .app-loader-content {
+            display: grid;
+            justify-items: center;
+            gap: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .app-loader-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: #1c77ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .app-loader-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .app-loader-detail {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        .btn-action[aria-busy="true"] { cursor: progress; }
+        .btn-action[aria-busy="true"]::before {
+            display: inline-block;
+            width: 0.8em;
+            height: 0.8em;
+            margin-right: 0.65em;
+            border: 1px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            content: "";
+            vertical-align: -0.08em;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .hidden { display: none !important; }
 
@@ -401,26 +489,33 @@
             }
             .stat-group { gap: 16px; }
             .module-card { padding: 18px 14px; }
+            .main-content { padding: 28px 18px; }
         }
     </style>
 </head>
 <body>
+    <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-hidden="false">
+        <div class="app-loader-content">
+            <span class="app-loader-spinner" aria-hidden="true"></span>
+            <p class="app-loader-title">Opening study notes</p>
+            <p class="app-loader-detail" id="appLoaderDetail">Preparing the embedded app...</p>
+        </div>
+    </div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2>Drivers Ed Hub</h2>
-            <p>Comprehensive Study Answer Key</p>
+            <h2>Drivers Ed</h2>
         </div>
 
         <!-- Search Input -->
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search study notes..." oninput="filterSearch()">
+            <input type="text" id="searchInput" placeholder="Search cards..." oninput="filterSearch()">
         </div>
 
         <!-- Quizlet Direct Links -->
         <div class="quick-links">
-            <h3>Quizlet Direct Links</h3>
+            <h3>Quizlet links</h3>
             <div class="link-grid">
                 <a href="https://quizlet.com/126461449/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 2 ↗</a>
                 <a href="https://quizlet.com/126731738/print" target="_blank" rel="noopener noreferrer" class="quizlet-btn">Module 3 ↗</a>
@@ -439,8 +534,9 @@
             <!-- Paste Tab -->
             <div id="tabPaste" class="tab-content">
                 <textarea id="pasteInput" placeholder="Copy text from Quizlet and paste it here..."></textarea>
-                <button class="btn-action" onclick="handlePaste()">+ Parse & Add Module</button>
+                <button class="btn-action" onclick="handlePaste()">Add study set</button>
                 <p class="model-status" id="modelStatus" role="status" aria-live="polite"></p>
+                <progress class="model-progress hidden" max="100" value="0" aria-label="Local AI loading progress"></progress>
             </div>
 
             <!-- Upload Tab -->
@@ -451,12 +547,13 @@
                     <input type="file" id="fileInput" accept=".txt" multiple onchange="handleFileUpload(event)">
                 </div>
                 <p class="model-status" id="uploadStatus" role="status" aria-live="polite"></p>
+                <progress class="model-progress hidden" max="100" value="0" aria-label="Local AI loading progress"></progress>
             </div>
         </div>
 
         <!-- Loaded Modules Navigation -->
         <nav class="nav-section">
-            <h3>Loaded Modules</h3>
+            <h3>Modules</h3>
             <ul class="module-list" id="moduleNav"></ul>
         </nav>
     </aside>
@@ -466,8 +563,8 @@
         <!-- Dashboard Top Banner -->
         <div class="top-banner">
             <div>
-                <h1 style="font-size: 1.4rem;">Master Answer Key</h1>
-                <p style="font-size: 0.85rem; color: var(--text-muted);">Easily searchable database across all study modules</p>
+                <h1 class="page-title">Study notes</h1>
+                <p class="page-description">Search across your study modules</p>
             </div>
             <div class="stat-group">
                 <div class="stat-item">
@@ -484,6 +581,8 @@
         <!-- Modules Container -->
         <div id="modulesContainer"></div>
     </main>
+
+    <script id="embeddedModelArchive" type="application/octet-stream">__SMOLLM_MODEL_ARCHIVE_BASE64__</script>
 
     <script>
         const moduleStore = [];
@@ -553,9 +652,31 @@
             ]
         };
 
+        let appDomReady = false;
+        let embeddedArchiveReady = false;
+
+        function checkEmbeddedArchiveReady() {
+            const archiveText = document.getElementById('embeddedModelArchive')?.firstChild;
+            embeddedArchiveReady = Boolean(archiveText && archiveText.length > 1000);
+        }
+
+        function hideStartupLoaderIfReady() {
+            if (!appDomReady || !embeddedArchiveReady) return;
+            const loader = document.getElementById('appLoader');
+            loader.setAttribute('aria-hidden', 'true');
+        }
+
+        document.addEventListener('embeddedmodelready', () => {
+            checkEmbeddedArchiveReady();
+            hideStartupLoaderIfReady();
+        });
+
         window.addEventListener('DOMContentLoaded', () => {
             moduleStore.push(module2Data);
             renderAllModules();
+            checkEmbeddedArchiveReady();
+            appDomReady = true;
+            hideStartupLoaderIfReady();
         });
 
         // Tab Switching
@@ -577,16 +698,179 @@
         const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2';
         const ONNX_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0-dev.20250409-89f8206ba4/dist/';
         let parserPipelinePromise;
+        let embeddedModelAssetsPromise;
 
         function setModelStatus(message) {
             document.querySelectorAll('.model-status').forEach(status => {
                 status.textContent = message;
+                const progress = status.nextElementSibling;
+                if (!(progress instanceof HTMLProgressElement)) return;
+                const fraction = message.match(/(\d+)\s+of\s+(\d+)/i);
+                const percent = message.match(/(\d+(?:\.\d+)?)%/);
+                const indeterminate = /\b(?:loading|starting|interpreting|unpacking|checking)\b/i.test(message);
+                if (fraction) {
+                    progress.value = Number(fraction[1]) / Number(fraction[2]) * 100;
+                    progress.classList.remove('hidden');
+                } else if (percent) {
+                    progress.value = Number(percent[1]);
+                    progress.classList.remove('hidden');
+                } else if (indeterminate) {
+                    progress.removeAttribute('value');
+                    progress.classList.remove('hidden');
+                } else {
+                    progress.value = 0;
+                    progress.classList.add('hidden');
+                }
             });
+            const loaderDetail = document.getElementById('appLoaderDetail');
+            const loader = document.getElementById('appLoader');
+            if (loaderDetail && loader?.getAttribute('aria-hidden') === 'false') {
+                loaderDetail.textContent = message;
+            }
+        }
+
+        async function getEmbeddedModelAssets() {
+            if (!embeddedModelAssetsPromise) {
+                embeddedModelAssetsPromise = (async () => {
+                    const archiveElement = document.getElementById('embeddedModelArchive');
+                    const encodedArchive = archiveElement?.textContent.trim();
+                    if (!encodedArchive || encodedArchive.startsWith('__SMOLLM_')) {
+                        throw new Error('The local AI archive is missing. Rebuild index.svg with the embedded model bundle.');
+                    }
+                    archiveElement.textContent = '';
+
+                    const archive = decodeBase64Chunks(encodedArchive);
+                    const assets = await unzipEmbeddedModel(archive);
+                    const requiredFiles = [
+                        'config.json',
+                        'generation_config.json',
+                        'merges.txt',
+                        'onnx/model_quantized.onnx',
+                        'special_tokens_map.json',
+                        'tokenizer.json',
+                        'tokenizer_config.json',
+                        'vocab.json'
+                    ];
+                    const missingFiles = requiredFiles.filter(file => !assets.has(file));
+                    if (missingFiles.length) {
+                        throw new Error(`The embedded local AI archive is missing: ${missingFiles.join(', ')}.`);
+                    }
+                    return assets;
+                })().catch(error => {
+                    embeddedModelAssetsPromise = null;
+                    throw error;
+                });
+            }
+            return embeddedModelAssetsPromise;
+        }
+
+        function decodeBase64Chunks(encoded) {
+            const padding = encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0;
+            const bytes = new Uint8Array(Math.floor(encoded.length * 3 / 4) - padding);
+            const chunkSize = 64 * 1024;
+            let offset = 0;
+            for (let index = 0; index < encoded.length; index += chunkSize) {
+                const binary = atob(encoded.slice(index, index + chunkSize));
+                for (let byteIndex = 0; byteIndex < binary.length; byteIndex++) {
+                    bytes[offset + byteIndex] = binary.charCodeAt(byteIndex);
+                }
+                offset += binary.length;
+            }
+            if (offset !== bytes.length) throw new Error('The embedded local AI archive is incomplete.');
+            return bytes;
+        }
+
+        async function unzipEmbeddedModel(archive) {
+            const view = new DataView(archive.buffer, archive.byteOffset, archive.byteLength);
+            const endSignature = 0x06054b50;
+            const centralSignature = 0x02014b50;
+            const localSignature = 0x04034b50;
+            let endOffset = -1;
+            for (let offset = archive.length - 22; offset >= Math.max(0, archive.length - 65557); offset--) {
+                if (view.getUint32(offset, true) === endSignature) {
+                    endOffset = offset;
+                    break;
+                }
+            }
+            if (endOffset < 0) throw new Error('The embedded local AI archive is not a valid ZIP file.');
+
+            const entryCount = view.getUint16(endOffset + 10, true);
+            let entryOffset = view.getUint32(endOffset + 16, true);
+            const decoder = new TextDecoder();
+            const assets = new Map();
+            const modelRoot = `${PARSER_MODEL}/`;
+
+            for (let index = 0; index < entryCount; index++) {
+                if (view.getUint32(entryOffset, true) !== centralSignature) {
+                    throw new Error('The embedded local AI ZIP directory is damaged.');
+                }
+                const compression = view.getUint16(entryOffset + 10, true);
+                const compressedSize = view.getUint32(entryOffset + 20, true);
+                const uncompressedSize = view.getUint32(entryOffset + 24, true);
+                const filenameLength = view.getUint16(entryOffset + 28, true);
+                const extraLength = view.getUint16(entryOffset + 30, true);
+                const commentLength = view.getUint16(entryOffset + 32, true);
+                const localOffset = view.getUint32(entryOffset + 42, true);
+                const filename = decoder.decode(archive.subarray(entryOffset + 46, entryOffset + 46 + filenameLength));
+                entryOffset += 46 + filenameLength + extraLength + commentLength;
+                if (!filename.startsWith(modelRoot)) continue;
+
+                if (view.getUint32(localOffset, true) !== localSignature) {
+                    throw new Error(`The embedded local AI ZIP entry is damaged: ${filename}.`);
+                }
+                const localNameLength = view.getUint16(localOffset + 26, true);
+                const localExtraLength = view.getUint16(localOffset + 28, true);
+                const dataOffset = localOffset + 30 + localNameLength + localExtraLength;
+                const compressed = archive.subarray(dataOffset, dataOffset + compressedSize);
+                let contents;
+                if (compression === 0) {
+                    contents = compressed.slice();
+                } else if (compression === 8 && typeof DecompressionStream === 'function') {
+                    const stream = new Blob([compressed]).stream()
+                        .pipeThrough(new DecompressionStream('deflate-raw'));
+                    contents = new Uint8Array(await new Response(stream).arrayBuffer());
+                } else {
+                    throw new Error(`This browser cannot unpack the embedded local AI file: ${filename}.`);
+                }
+                if (contents.length !== uncompressedSize) {
+                    throw new Error(`The embedded local AI file is incomplete: ${filename}.`);
+                }
+                assets.set(filename.slice(modelRoot.length), contents);
+                setModelStatus(`Unpacking embedded local AI ${index + 1} of ${entryCount}...`);
+            }
+            archive.fill(0);
+            return assets;
+        }
+
+        function createEmbeddedModelCache(assets) {
+            function getModelPath(key) {
+                const value = typeof key === 'string' ? key : key?.url;
+                if (!value) return '';
+                const marker = `/${PARSER_MODEL}/resolve/${PARSER_REVISION}/`;
+                const markerIndex = value.indexOf(marker);
+                return markerIndex === -1 ? '' : value.slice(markerIndex + marker.length).split('?')[0];
+            }
+
+            return {
+                async match(...keys) {
+                    for (const key of keys) {
+                        const contents = assets.get(getModelPath(key));
+                        if (contents) return new Response(contents);
+                    }
+                    return undefined;
+                },
+                async put(key, response) {
+                    const path = getModelPath(key);
+                    if (!path) throw new Error('Transformers.js requested a model file outside the embedded bundle.');
+                    assets.set(path, new Uint8Array(await response.arrayBuffer()));
+                }
+            };
         }
 
         async function getParserPipeline() {
             if (!parserPipelinePromise) {
                 parserPipelinePromise = (async () => {
+                    const modelAssets = await getEmbeddedModelAssets();
                     let transformers;
                     try {
                         transformers = await import(TRANSFORMERS_URL);
@@ -595,8 +879,13 @@
                     }
 
                     const { env, pipeline } = transformers;
-                    env.useBrowserCache = true;
-                    env.allowRemoteModels = true;
+                    env.useBrowserCache = false;
+                    env.useFSCache = false;
+                    env.useCustomCache = true;
+                    env.customCache = createEmbeddedModelCache(modelAssets);
+                    env.allowRemoteModels = false;
+                    env.allowLocalModels = true;
+                    env.remoteHost = 'https://embedded-model.invalid/';
                     env.backends.onnx.wasm.wasmPaths = ONNX_WASM_URL;
                     env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
                         ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
@@ -607,83 +896,23 @@
                         const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
                         setModelStatus(`Loading local AI ${detail}${percent}`);
                     };
-                    const candidates = [];
-                    if (navigator.gpu) {
-                        try {
-                            const adapter = await navigator.gpu.requestAdapter();
-                            if (adapter) {
-                                candidates.push({ device: 'webgpu', dtype: 'q4f16', modelFile: 'model_q4f16.onnx' });
-                            } else {
-                                setModelStatus('No compatible GPU adapter; using the local CPU model...');
-                            }
-                        } catch (error) {
-                            setModelStatus(`GPU unavailable (${error.message}); using the local CPU model...`);
-                        }
+                    setModelStatus('Starting embedded local AI on CPU...');
+                    try {
+                        return await pipeline('text-generation', PARSER_MODEL, {
+                            revision: PARSER_REVISION,
+                            device: 'wasm',
+                            dtype: 'q8',
+                            progress_callback
+                        });
+                    } catch (error) {
+                        throw new Error(`Embedded local AI could not initialize: ${error.message}`);
                     }
-                    candidates.push({ device: 'wasm', dtype: 'q8', modelFile: 'model_quantized.onnx' });
-                    let lastError;
-
-                    for (const candidate of candidates) {
-                        let assetWarning = '';
-                        try {
-                            setModelStatus(`Checking ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'} model and runtime access...`);
-                            await verifyParserAssets(candidate.modelFile, candidate.device === 'webgpu');
-                        } catch (error) {
-                            assetWarning = error.message;
-                            setModelStatus(`Asset check failed; trying cached ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'} model/runtime...`);
-                        }
-
-                        try {
-                            setModelStatus(`Starting local AI on ${candidate.device === 'webgpu' ? 'GPU' : 'CPU'}...`);
-                            return await pipeline('text-generation', PARSER_MODEL, {
-                                revision: PARSER_REVISION,
-                                device: candidate.device,
-                                dtype: candidate.dtype,
-                                progress_callback
-                            });
-                        } catch (error) {
-                            lastError = new Error(assetWarning
-                                ? `${assetWarning}; model initialization failed: ${error.message}`
-                                : error.message);
-                            if (candidate.device === 'webgpu') {
-                                setModelStatus(`GPU initialization failed (${lastError.message}); switching to CPU...`);
-                            }
-                        }
-                    }
-
-                    throw new Error(`Local AI could not initialize: ${lastError?.message || 'No supported runtime was available.'}`);
                 })().catch(error => {
                     parserPipelinePromise = null;
                     throw error;
                 });
             }
             return parserPipelinePromise;
-        }
-
-        async function verifyParserAssets(modelFile, useGpu) {
-            const modelBase = `https://huggingface.co/${PARSER_MODEL}/resolve/${PARSER_REVISION}`;
-            const assets = [
-                ['SmolLM model config', `${modelBase}/config.json`],
-                ['SmolLM model weights', `${modelBase}/onnx/${modelFile}`],
-                ['ONNX Runtime WebAssembly', `${ONNX_WASM_URL}ort-wasm-simd-threaded${useGpu ? '.jsep' : ''}.wasm`]
-            ];
-            const failures = await Promise.all(assets.map(async ([name, url]) => {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 8000);
-                try {
-                    const response = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal });
-                    return response.ok ? '' : `${name} returned HTTP ${response.status} from ${url}`;
-                } catch (error) {
-                    const hint = name.startsWith('SmolLM')
-                        ? ' Open the SVG directly in a modern browser, allow access to huggingface.co, and try again.'
-                        : ' Allow access to cdn.jsdelivr.net and try again.';
-                    return `Cannot reach ${name} at ${url} (${error.message}).${hint}`;
-                } finally {
-                    clearTimeout(timeout);
-                }
-            }));
-            const failedAssets = failures.filter(Boolean);
-            if (failedAssets.length) throw new Error(failedAssets.join('; '));
         }
 
         function getQuizletEntries(rawText, fallbackName) {
@@ -749,6 +978,13 @@
                 }
             }
 
+            const inlineLabeled = entry.raw.match(/^(?:question|prompt|term)\s*:\s*(.+?)\s+(?:answer|definition|response)\s*:\s*([\s\S]+)$/i);
+            if (inlineLabeled) {
+                const question = inlineLabeled[1].trim();
+                const answer = inlineLabeled[2].trim();
+                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+            }
+
             const inlineQuestion = entry.raw.match(/^(.+?\?)\s+(.+)$/);
             if (inlineQuestion) {
                 const question = inlineQuestion[1].trim();
@@ -807,23 +1043,83 @@
             return normalizedPhrase && (` ${normalizedAnswer} `).includes(` ${normalizedPhrase} `);
         }
 
+        function extractModelCard(content) {
+            const text = String(content || '').replace(/```(?:json)?|```/gi, '');
+            const start = text.indexOf('{');
+            if (start === -1) return null;
+            let depth = 0;
+            let inString = false;
+            let escaped = false;
+            for (let index = start; index < text.length; index++) {
+                const character = text[index];
+                if (inString) {
+                    if (escaped) escaped = false;
+                    else if (character === '\\') escaped = true;
+                    else if (character === '"') inString = false;
+                    continue;
+                }
+                if (character === '"') inString = true;
+                else if (character === '{') depth++;
+                else if (character === '}' && --depth === 0) {
+                    try {
+                        return JSON.parse(text.slice(start, index + 1));
+                    } catch {
+                        return null;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function validModelCardSplit(entry, item) {
+            if (!item) return null;
+            const question = typeof item.question === 'string' ? item.question.trim() : '';
+            const answer = typeof item.answer === 'string' ? item.answer.trim() : '';
+            if (!question || !answer) return null;
+
+            const source = normalizedSourceText(entry.raw);
+            const normalizedQuestion = normalizedSourceText(question);
+            const normalizedAnswer = normalizedSourceText(answer);
+            const questionStart = source.indexOf(normalizedQuestion);
+            const answerStart = source.indexOf(normalizedAnswer);
+            const separate = questionStart >= 0 && answerStart >= 0 &&
+                (questionStart + normalizedQuestion.length <= answerStart ||
+                    answerStart + normalizedAnswer.length <= questionStart);
+            if (!separate) return null;
+            return {
+                num: entry.num,
+                question,
+                answer,
+                highlights: getHighlightPhrases(answer, item.highlights)
+            };
+        }
+
         async function parseWithModel(entries) {
             const parser = await getParserPipeline();
             const items = [];
-            const batchSize = 4;
-            for (let index = 0; index < entries.length; index += batchSize) {
-                const batch = entries.slice(index, index + batchSize);
-                setModelStatus(`Interpreting ${index + 1}-${index + batch.length} of ${entries.length} complex cards...`);
-                const prompt = [
-                    'Separate each Quizlet card into one question and its answer. Keep each pair together as one card.',
-                    'Copy the question and answer from the card text; do not paraphrase, omit facts, combine different cards, or invent details.',
-                    'For true/false cards, keep the claim as question and true/false as answer. For fill-in-the-blank cards, keep the original blank in the question and put its supplied answer in answer.',
-                    'Return only a JSON array of objects with num, question, answer, and highlights.',
-                    'highlights must contain every answer point as exact phrases copied from answer. Split slash-, semicolon-, and bullet-separated answer points into separate highlights.',
-                    JSON.stringify(batch.map(entry => ({ num: entry.num, text: entry.raw })))
-                ].join('\n');
-                const output = await parser([{ role: 'user', content: prompt }], {
-                    max_new_tokens: Math.min(384, Math.ceil(48 + batch.reduce((count, entry) => count + entry.raw.length, 0) / 4)),
+            for (let index = 0; index < entries.length; index++) {
+                const entry = entries[index];
+                setModelStatus(`Interpreting card ${index + 1} of ${entries.length}...`);
+                const messages = [
+                    {
+                        role: 'system',
+                        content: 'Split one flashcard into its question and answer. Copy exact text only. Do not answer from memory. Return one JSON object with question, answer, and highlights.'
+                    },
+                    {
+                        role: 'user',
+                        content: 'Question: When should tire pressure be checked? Answer: Weekly.'
+                    },
+                    {
+                        role: 'assistant',
+                        content: '{"question":"When should tire pressure be checked?","answer":"Weekly.","highlights":["Weekly."]}'
+                    },
+                    {
+                        role: 'user',
+                        content: `Copy the question and answer exactly from this one card. For true/false, use the claim and its true/false answer. For a blank, keep the blank in the question and copy its answer.\n${entry.raw}\nReturn only the JSON object.`
+                    }
+                ];
+                const output = await parser(messages, {
+                    max_new_tokens: Math.min(160, Math.max(96, Math.ceil(64 + entry.raw.length / 4))),
                     do_sample: false,
                 });
                 const generated = output[0]?.generated_text;
@@ -832,36 +1128,8 @@
                     : Array.isArray(generated)
                         ? generated.at(-1)?.content || ''
                         : '';
-                const json = content.match(/\[[\s\S]*\]/);
-                let parsedBatch = [];
-                if (json) {
-                    try {
-                        parsedBatch = JSON.parse(json[0]);
-                    } catch {
-                        parsedBatch = [];
-                    }
-                }
-
-                batch.forEach((entry, batchIndex) => {
-                    const parsedItem = Array.isArray(parsedBatch)
-                        ? parsedBatch.find(item => Number(item?.num) === entry.num) || parsedBatch[batchIndex]
-                        : null;
-                    const question = typeof parsedItem?.question === 'string' ? parsedItem.question.trim() : '';
-                    const answer = typeof parsedItem?.answer === 'string' ? parsedItem.answer.trim() : '';
-                    const source = normalizedSourceText(entry.raw);
-                    const questionIsSource = question && (` ${source} `).includes(` ${normalizedSourceText(question)} `);
-                    const answerIsSource = answer && (` ${source} `).includes(` ${normalizedSourceText(answer)} `);
-                    if (!questionIsSource || !answerIsSource) {
-                        items.push(preserveCard(entry));
-                        return;
-                    }
-                    items.push({
-                        num: entry.num,
-                        question,
-                        answer,
-                        highlights: getHighlightPhrases(answer, parsedItem?.highlights)
-                    });
-                });
+                const parsedItem = extractModelCard(content);
+                items.push(validModelCardSplit(entry, parsedItem) || preserveCard(entry));
             }
             return items;
         }
@@ -902,7 +1170,7 @@
             const input = document.getElementById('pasteInput');
             if (!input.value.trim()) return;
             const button = document.querySelector('#tabPaste .btn-action');
-            button.disabled = true;
+            setButtonBusy(button, true, 'Preparing cards...');
             try {
                 const fallback = `Module ${moduleStore.length + 1}`;
                 const parsed = await parseQuizletText(input.value, fallback);
@@ -911,7 +1179,23 @@
             } catch (error) {
                 setModelStatus(error.message || 'Could not parse this Quizlet text.');
             } finally {
+                setButtonBusy(button, false);
+            }
+        }
+
+        function setButtonBusy(button, isBusy, busyLabel = '') {
+            if (isBusy) {
+                button.dataset.idleLabel ||= button.textContent;
+                button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
+                button.textContent = busyLabel;
+            } else {
                 button.disabled = false;
+                button.removeAttribute('aria-busy');
+                if (button.dataset.idleLabel) {
+                    button.textContent = button.dataset.idleLabel;
+                    delete button.dataset.idleLabel;
+                }
             }
         }
 
@@ -971,7 +1255,9 @@
                     const answer = item.answer || item.a || '';
                     const searchableText = `${question} ${answer}`.toLowerCase();
                     const questionHtml = escapeHtml(question);
-                    const highlights = item.highlights?.length ? item.highlights : item.highlight || answer;
+                    const highlights = item.highlights?.length
+                        ? item.highlights
+                        : item.highlight || splitAnswerHighlights(answer);
                     const answerHtml = answer
                         ? `<span class="study-answer">${highlightImportantText(answer, highlights)}</span>`
                         : '';
@@ -1028,9 +1314,12 @@
 
             const markedPhrases = new Set(phrases.map(phrase => phrase.toLowerCase()));
             const pattern = new RegExp(`(${phrases.map(phrase => phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-            return text.split(pattern).map(part => markedPhrases.has(part.toLowerCase())
-                ? `<mark>${escapeHtml(part)}</mark>`
-                : escapeHtml(part)).join('');
+            let highlightIndex = 0;
+            return text.split(pattern).map(part => {
+                if (!markedPhrases.has(part.toLowerCase())) return escapeHtml(part);
+                const tone = highlightIndex++ % 3;
+                return `<mark class="highlight-tone-${tone}">${escapeHtml(part)}</mark>`;
+            }).join('');
         }
 
         function escapeHtml(str) {

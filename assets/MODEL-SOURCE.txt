@@ -1,0 +1,8 @@
+Model: HuggingFaceTB/SmolLM2-135M-Instruct
+Revision: 12fd25f77366fa6b3b4b768ec3050bf629380bac
+Source: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/tree/12fd25f77366fa6b3b4b768ec3050bf629380bac
+License: Apache-2.0
+ONNX model SHA-256: ecc1a19eece6494e2963cf74f78ace35916e8d0b803168ddd41db00979f18e39
+
+The archive contains the model's quantized ONNX CPU weights, tokenizer files,
+and configuration files from the pinned source revision.
