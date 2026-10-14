@@ -9,7 +9,7 @@ MODEL_ARCHIVE = ROOT / "assets" / "smollm2-135m-instruct-cpu.zip"
 MODEL_PARTS_DIR = ROOT / "assets" / "model-chunks"
 MODEL_PARTS_PLACEHOLDER = "__SMOLLM_MODEL_PARTS_JSON__"
 MODEL_PART_SIZE = 10 * 1024 * 1024
-MODEL_PARTS_URL = "https://cdn.jsdelivr.net/gh/kkudzu/quizlet@main/assets/model-chunks"
+MODEL_PARTS_URL = "https://raw.githubusercontent.com/kkudzu/quizlet/main/assets/model-chunks"
 SVG_OUTPUT = ROOT / "quiz1.svg"
 SVG_NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG_NS)

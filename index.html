@@ -731,7 +731,7 @@
                     const archiveSize = parts.reduce((total, part) => {
                         if (!Number.isSafeInteger(part.size) || part.size <= 0 ||
                             typeof part.url !== 'string' ||
-                            !/^https:\/\/cdn\.jsdelivr\.net\/gh\/kkudzu\/quizlet@main\/assets\/model-chunks\/model-\d{3}-[a-f0-9]{64}\.bin$/.test(part.url) ||
+                            !/^https:\/\/raw\.githubusercontent\.com\/kkudzu\/quizlet\/main\/assets\/model-chunks\/model-\d{3}-[a-f0-9]{64}\.bin$/.test(part.url) ||
                             !/^[a-f0-9]{64}$/.test(part.sha256)) {
                             throw new Error('The local AI model bundle has invalid part metadata.');
                         }
@@ -754,10 +754,10 @@
                         try {
                             response = await fetch(part.url);
                         } catch (error) {
-                            throw new Error(`Could not download local AI model part ${index + 1} from jsDelivr (${error.message}).`);
+                            throw new Error(`Could not download local AI model part ${index + 1} from GitHub (${error.message}).`);
                         }
                         if (!response.ok) {
-                            throw new Error(`Could not download local AI model part ${index + 1} from jsDelivr (HTTP ${response.status}).`);
+                            throw new Error(`Could not download local AI model part ${index + 1} from GitHub (HTTP ${response.status}).`);
                         }
                         const bytes = new Uint8Array(await response.arrayBuffer());
                         if (bytes.length !== part.size) {
