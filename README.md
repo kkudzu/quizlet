@@ -2,7 +2,7 @@
 
 ## Run the study hub
 
-Open the [study hub SVG](https://raw.githubusercontent.com/kkudzu/quizlet/main/quiz1.svg) directly in a modern browser. It launches the full HTML app in a new `about:blank` tab; no local download, separate server, backend, or proxy is needed. If the browser displays XML instead of the app, verify that the GitHub Raw URL ends in `/quiz1.svg` and that it begins with `<svg` or an XML declaration, not `version https://git-lfs.github.com/spec/v1`.
+Open the [study hub SVG](https://cdn.jsdelivr.net/gh/kkudzu/quizlet@8e96058186cf53a09898021790d41745aaac33a4/quiz1.svg) directly in a modern browser. GitHub Raw applies a sandbox policy that prevents the SVG's launch button from running, so use the jsDelivr URL for the SVG itself. The SVG fetches its larger model parts from GitHub Raw. It launches the full HTML app in a new `about:blank` tab; no local download, separate server, backend, or proxy is needed. When publishing future changes, update the commit in this URL to the published revision.
 
 The app parses common formats instantly on-device. Less common cards use the pinned SmolLM2 model locally in the browser. Its CPU ONNX model and tokenizer are split into small, integrity-checked files and fetched from GitHub Raw only when AI parsing is needed; no Hugging Face connection or local model download is needed. Complex cards are sent to the model one at a time and returned as one question/answer pair. If the model cannot verify a split, the original card stays together. Answer points use Radicle Garden-inspired blue, green, and lavender highlights. The bundled SmolLM2 files are Apache-2.0 licensed; the model source and license are included in the source archive.
 
