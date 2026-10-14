@@ -1,11 +1,15 @@
-import base64
+import hashlib
+import json
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parent
 MODEL_ARCHIVE = ROOT / "assets" / "smollm2-135m-instruct-cpu.zip"
-MODEL_ARCHIVE_PLACEHOLDER = "__SMOLLM_MODEL_ARCHIVE_BASE64__"
+MODEL_PARTS_DIR = ROOT / "assets" / "model-chunks"
+MODEL_PARTS_PLACEHOLDER = "__SMOLLM_MODEL_PARTS_JSON__"
+MODEL_PART_SIZE = 40 * 1024 * 1024
+MODEL_PARTS_URL = "https://cdn.jsdelivr.net/gh/kkudzu/quizlet@main/assets/model-chunks"
 SVG_OUTPUT = ROOT / "quiz1.svg"
 SVG_NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG_NS)
@@ -17,12 +21,37 @@ def svg_element(parent, name, attributes=None, text=None):
     return element
 
 
+def write_model_parts():
+    MODEL_PARTS_DIR.mkdir(parents=True, exist_ok=True)
+    parts = []
+    with MODEL_ARCHIVE.open("rb") as archive:
+        index = 0
+        while chunk := archive.read(MODEL_PART_SIZE):
+            digest = hashlib.sha256(chunk).hexdigest()
+            filename = f"model-{index:03}-{digest}.bin"
+            (MODEL_PARTS_DIR / filename).write_bytes(chunk)
+            parts.append(
+                {
+                    "url": f"{MODEL_PARTS_URL}/{filename}",
+                    "size": len(chunk),
+                    "sha256": digest,
+                }
+            )
+            index += 1
+
+    current_files = {Path(part["url"]).name for part in parts}
+    for old_part in MODEL_PARTS_DIR.glob("model-*.bin"):
+        if old_part.name not in current_files:
+            old_part.unlink()
+    return parts
+
+
 def build():
     html = (ROOT / "index.html").read_text(encoding="utf-8")
-    if html.count(MODEL_ARCHIVE_PLACEHOLDER) != 1:
-        raise ValueError("index.html must contain exactly one embedded model archive placeholder")
-    model_archive = base64.b64encode(MODEL_ARCHIVE.read_bytes()).decode("ascii")
-    html = html.replace(MODEL_ARCHIVE_PLACEHOLDER, "")
+    if html.count(MODEL_PARTS_PLACEHOLDER) != 1:
+        raise ValueError("index.html must contain exactly one local AI model parts placeholder")
+    model_parts = write_model_parts()
+    html = html.replace(MODEL_PARTS_PLACEHOLDER, json.dumps(model_parts, separators=(",", ":")))
     svg = ET.Element(
         f"{{{SVG_NS}}}svg",
         {
@@ -42,7 +71,6 @@ def build():
         "Open the interactive study hub in a new browser tab.",
     )
     svg_element(svg, "metadata", {"id": "app-source"}, html)
-    svg_element(svg, "metadata", {"id": "model-archive"}, model_archive)
     svg_element(
         svg,
         "style",
@@ -134,15 +162,12 @@ def build():
   document.getElementById("status").textContent = "Preparing study hub...";
   requestAnimationFrame(() => setTimeout(() => {
     try {
-      const appSource = document.getElementById("app-source").textContent;
-      const archiveElement = document.getElementById("model-archive");
-      const modelArchive = archiveElement.textContent;
+      const sourceElement = document.getElementById("app-source");
+      const appSource = sourceElement.textContent;
       appWindow.document.open();
       appWindow.document.write(appSource);
       appWindow.document.close();
-      appWindow.document.getElementById("embeddedModelArchive").textContent = modelArchive;
-      appWindow.document.dispatchEvent(new appWindow.Event("embeddedmodelready"));
-      archiveElement.textContent = "";
+      sourceElement.textContent = "";
       document.getElementById("status").textContent = "Study hub opened in a new tab.";
     } catch (error) {
       appWindow.document.body.innerHTML = "<main><p>The study hub could not be opened. Close this tab and try again.</p></main>";

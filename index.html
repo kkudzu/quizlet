@@ -582,7 +582,7 @@
         <div id="modulesContainer"></div>
     </main>
 
-    <script id="embeddedModelArchive" type="application/octet-stream">__SMOLLM_MODEL_ARCHIVE_BASE64__</script>
+    <script id="embeddedModelParts" type="application/json">__SMOLLM_MODEL_PARTS_JSON__</script>
 
     <script>
         const moduleStore = [];
@@ -653,28 +653,15 @@
         };
 
         let appDomReady = false;
-        let embeddedArchiveReady = false;
-
-        function checkEmbeddedArchiveReady() {
-            const archiveText = document.getElementById('embeddedModelArchive')?.firstChild;
-            embeddedArchiveReady = Boolean(archiveText && archiveText.length > 1000);
-        }
-
         function hideStartupLoaderIfReady() {
-            if (!appDomReady || !embeddedArchiveReady) return;
+            if (!appDomReady) return;
             const loader = document.getElementById('appLoader');
             loader.setAttribute('aria-hidden', 'true');
         }
 
-        document.addEventListener('embeddedmodelready', () => {
-            checkEmbeddedArchiveReady();
-            hideStartupLoaderIfReady();
-        });
-
         window.addEventListener('DOMContentLoaded', () => {
             moduleStore.push(module2Data);
             renderAllModules();
-            checkEmbeddedArchiveReady();
             appDomReady = true;
             hideStartupLoaderIfReady();
         });
@@ -698,7 +685,7 @@
         const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2';
         const ONNX_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0-dev.20250409-89f8206ba4/dist/';
         let parserPipelinePromise;
-        let embeddedModelAssetsPromise;
+        let localModelAssetsPromise;
 
         function setModelStatus(message) {
             document.querySelectorAll('.model-status').forEach(status => {
@@ -729,18 +716,64 @@
             }
         }
 
-        async function getEmbeddedModelAssets() {
-            if (!embeddedModelAssetsPromise) {
-                embeddedModelAssetsPromise = (async () => {
-                    const archiveElement = document.getElementById('embeddedModelArchive');
-                    const encodedArchive = archiveElement?.textContent.trim();
-                    if (!encodedArchive || encodedArchive.startsWith('__SMOLLM_')) {
-                        throw new Error('The local AI archive is missing. Rebuild index.svg with the embedded model bundle.');
+        async function getLocalModelAssets() {
+            if (!localModelAssetsPromise) {
+                localModelAssetsPromise = (async () => {
+                    const partsElement = document.getElementById('embeddedModelParts');
+                    const partsText = partsElement?.textContent.trim();
+                    if (!partsText || partsText.startsWith('__SMOLLM_')) {
+                        throw new Error('Local AI model URLs are not configured. Open the study hub from its published SVG.');
                     }
-                    archiveElement.textContent = '';
-
-                    const archive = decodeBase64Chunks(encodedArchive);
-                    const assets = await unzipEmbeddedModel(archive);
+                    const parts = JSON.parse(partsText);
+                    if (!Array.isArray(parts) || parts.length === 0) {
+                        throw new Error('The local AI model bundle has no download parts.');
+                    }
+                    const archiveSize = parts.reduce((total, part) => {
+                        if (!Number.isSafeInteger(part.size) || part.size <= 0 ||
+                            typeof part.url !== 'string' ||
+                            !/^https:\/\/cdn\.jsdelivr\.net\/gh\/kkudzu\/quizlet@main\/assets\/model-chunks\/model-\d{3}-[a-f0-9]{64}\.bin$/.test(part.url) ||
+                            !/^[a-f0-9]{64}$/.test(part.sha256)) {
+                            throw new Error('The local AI model bundle has invalid part metadata.');
+                        }
+                        const size = total + part.size;
+                        if (!Number.isSafeInteger(size)) {
+                            throw new Error('The local AI model bundle size is invalid.');
+                        }
+                        return size;
+                    }, 0);
+                    const cryptoApi = globalThis.crypto;
+                    if (!cryptoApi?.subtle) {
+                        throw new Error('This browser cannot verify local AI model downloads. Open the study hub in a modern browser.');
+                    }
+                    const archive = new Uint8Array(archiveSize);
+                    let archiveOffset = 0;
+                    for (let index = 0; index < parts.length; index++) {
+                        const part = parts[index];
+                        setModelStatus(`Downloading local AI model ${index + 1} of ${parts.length}...`);
+                        let response;
+                        try {
+                            response = await fetch(part.url);
+                        } catch (error) {
+                            throw new Error(`Could not download local AI model part ${index + 1} from jsDelivr (${error.message}).`);
+                        }
+                        if (!response.ok) {
+                            throw new Error(`Could not download local AI model part ${index + 1} from jsDelivr (HTTP ${response.status}).`);
+                        }
+                        const bytes = new Uint8Array(await response.arrayBuffer());
+                        if (bytes.length !== part.size) {
+                            throw new Error(`Local AI model part ${index + 1} has an unexpected size.`);
+                        }
+                        const digest = await cryptoApi.subtle.digest('SHA-256', bytes);
+                        const actualHash = [...new Uint8Array(digest)]
+                            .map(byte => byte.toString(16).padStart(2, '0')).join('');
+                        if (actualHash !== part.sha256) {
+                            throw new Error(`Local AI model part ${index + 1} failed its integrity check.`);
+                        }
+                        archive.set(bytes, archiveOffset);
+                        archiveOffset += bytes.length;
+                        bytes.fill(0);
+                    }
+                    const assets = await unzipLocalModelArchive(archive);
                     const requiredFiles = [
                         'config.json',
                         'generation_config.json',
@@ -753,34 +786,18 @@
                     ];
                     const missingFiles = requiredFiles.filter(file => !assets.has(file));
                     if (missingFiles.length) {
-                        throw new Error(`The embedded local AI archive is missing: ${missingFiles.join(', ')}.`);
+                        throw new Error(`The downloaded local AI archive is missing: ${missingFiles.join(', ')}.`);
                     }
                     return assets;
                 })().catch(error => {
-                    embeddedModelAssetsPromise = null;
+                    localModelAssetsPromise = null;
                     throw error;
                 });
             }
-            return embeddedModelAssetsPromise;
+            return localModelAssetsPromise;
         }
 
-        function decodeBase64Chunks(encoded) {
-            const padding = encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0;
-            const bytes = new Uint8Array(Math.floor(encoded.length * 3 / 4) - padding);
-            const chunkSize = 64 * 1024;
-            let offset = 0;
-            for (let index = 0; index < encoded.length; index += chunkSize) {
-                const binary = atob(encoded.slice(index, index + chunkSize));
-                for (let byteIndex = 0; byteIndex < binary.length; byteIndex++) {
-                    bytes[offset + byteIndex] = binary.charCodeAt(byteIndex);
-                }
-                offset += binary.length;
-            }
-            if (offset !== bytes.length) throw new Error('The embedded local AI archive is incomplete.');
-            return bytes;
-        }
-
-        async function unzipEmbeddedModel(archive) {
+        async function unzipLocalModelArchive(archive) {
             const view = new DataView(archive.buffer, archive.byteOffset, archive.byteLength);
             const endSignature = 0x06054b50;
             const centralSignature = 0x02014b50;
@@ -792,7 +809,7 @@
                     break;
                 }
             }
-            if (endOffset < 0) throw new Error('The embedded local AI archive is not a valid ZIP file.');
+            if (endOffset < 0) throw new Error('The downloaded local AI archive is not a valid ZIP file.');
 
             const entryCount = view.getUint16(endOffset + 10, true);
             let entryOffset = view.getUint32(endOffset + 16, true);
@@ -802,7 +819,7 @@
 
             for (let index = 0; index < entryCount; index++) {
                 if (view.getUint32(entryOffset, true) !== centralSignature) {
-                    throw new Error('The embedded local AI ZIP directory is damaged.');
+                    throw new Error('The downloaded local AI ZIP directory is damaged.');
                 }
                 const compression = view.getUint16(entryOffset + 10, true);
                 const compressedSize = view.getUint32(entryOffset + 20, true);
@@ -816,7 +833,7 @@
                 if (!filename.startsWith(modelRoot)) continue;
 
                 if (view.getUint32(localOffset, true) !== localSignature) {
-                    throw new Error(`The embedded local AI ZIP entry is damaged: ${filename}.`);
+                    throw new Error(`The downloaded local AI ZIP entry is damaged: ${filename}.`);
                 }
                 const localNameLength = view.getUint16(localOffset + 26, true);
                 const localExtraLength = view.getUint16(localOffset + 28, true);
@@ -830,19 +847,19 @@
                         .pipeThrough(new DecompressionStream('deflate-raw'));
                     contents = new Uint8Array(await new Response(stream).arrayBuffer());
                 } else {
-                    throw new Error(`This browser cannot unpack the embedded local AI file: ${filename}.`);
+                    throw new Error(`This browser cannot unpack the downloaded local AI file: ${filename}.`);
                 }
                 if (contents.length !== uncompressedSize) {
-                    throw new Error(`The embedded local AI file is incomplete: ${filename}.`);
+                    throw new Error(`The downloaded local AI file is incomplete: ${filename}.`);
                 }
                 assets.set(filename.slice(modelRoot.length), contents);
-                setModelStatus(`Unpacking embedded local AI ${index + 1} of ${entryCount}...`);
+                setModelStatus(`Unpacking local AI ${index + 1} of ${entryCount}...`);
             }
             archive.fill(0);
             return assets;
         }
 
-        function createEmbeddedModelCache(assets) {
+        function createLocalModelCache(assets) {
             function getModelPath(key) {
                 const value = typeof key === 'string' ? key : key?.url;
                 if (!value) return '';
@@ -861,7 +878,7 @@
                 },
                 async put(key, response) {
                     const path = getModelPath(key);
-                    if (!path) throw new Error('Transformers.js requested a model file outside the embedded bundle.');
+                    if (!path) throw new Error('Transformers.js requested a model file outside the local bundle.');
                     assets.set(path, new Uint8Array(await response.arrayBuffer()));
                 }
             };
@@ -870,7 +887,7 @@
         async function getParserPipeline() {
             if (!parserPipelinePromise) {
                 parserPipelinePromise = (async () => {
-                    const modelAssets = await getEmbeddedModelAssets();
+                    const modelAssets = await getLocalModelAssets();
                     let transformers;
                     try {
                         transformers = await import(TRANSFORMERS_URL);
@@ -882,7 +899,7 @@
                     env.useBrowserCache = false;
                     env.useFSCache = false;
                     env.useCustomCache = true;
-                    env.customCache = createEmbeddedModelCache(modelAssets);
+                    env.customCache = createLocalModelCache(modelAssets);
                     env.allowRemoteModels = false;
                     env.allowLocalModels = true;
                     env.remoteHost = 'https://embedded-model.invalid/';
@@ -896,7 +913,7 @@
                         const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
                         setModelStatus(`Loading local AI ${detail}${percent}`);
                     };
-                    setModelStatus('Starting embedded local AI on CPU...');
+                    setModelStatus('Starting local AI on CPU...');
                     try {
                         return await pipeline('text-generation', PARSER_MODEL, {
                             revision: PARSER_REVISION,
@@ -905,7 +922,7 @@
                             progress_callback
                         });
                     } catch (error) {
-                        throw new Error(`Embedded local AI could not initialize: ${error.message}`);
+                        throw new Error(`Local AI could not initialize: ${error.message}`);
                     }
                 })().catch(error => {
                     parserPipelinePromise = null;
