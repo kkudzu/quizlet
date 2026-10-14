@@ -22,6 +22,10 @@
             --highlight-blue: #d6e9ff;
             --highlight-green: #dffcc6;
             --highlight-purple: #e0daff;
+            --highlight-teal: #c8f3e8;
+            --highlight-yellow: #fff0b8;
+            --highlight-red: #ffe0dc;
+            --highlight-lavender: #efdfff;
         }
 
         * {
@@ -381,6 +385,13 @@
 
         mark.highlight-tone-1 { background: var(--highlight-green); color: #256400; }
         mark.highlight-tone-2 { background: var(--highlight-purple); color: #503f91; }
+        mark.highlight-rule { background: var(--highlight-green); color: #256400; }
+        mark.highlight-action { background: var(--highlight-blue); color: #0b3266; }
+        mark.highlight-term { background: var(--highlight-purple); color: #503f91; }
+        mark.highlight-number { background: var(--highlight-yellow); color: #664b00; }
+        mark.highlight-warning { background: var(--highlight-red); color: #8a281d; }
+        mark.highlight-definition { background: var(--highlight-lavender); color: #503f91; }
+        mark.highlight-fact { background: var(--highlight-teal); color: #075c4a; }
 
         ::selection { background: #d6e9ff; color: #17191d; }
 
@@ -518,7 +529,7 @@
 
         &lt;!-- Search Input --&gt;
         &lt;div class="search-box"&gt;
-            &lt;input type="text" id="searchInput" placeholder="Search cards..." oninput="filterSearch()"&gt;
+            &lt;input type="text" id="searchInput" placeholder="Search cards or related ideas..." oninput="filterSearch()" aria-label="Search cards and related ideas"&gt;
         &lt;/div&gt;
 
         &lt;!-- Quizlet Direct Links --&gt;
@@ -594,6 +605,7 @@
 
     &lt;script&gt;
         const moduleStore = [];
+        const searchTokenCache = new WeakMap();
 
         let appDomReady = false;
         function hideStartupLoaderIfReady() {
@@ -878,23 +890,55 @@
             const cleanText = rawText.replace(/\d+\s*\/\s*\d+/g, '')
                 .replace(/Study online at https:\/\/quizlet\.com\/\S+/g, '')
                 .trim();
-            const itemRegex = /(?:^|\n)\s*(\d+)\.\s*/g;
+            const itemRegex = /(?:^|\n)\s*(\d+)[.)]\s*/g;
             const matches = [...cleanText.matchAll(itemRegex)];
-            const heading = cleanText.slice(0, matches[0]?.index ?? cleanText.length)
-                .trim().split(/\n+/).filter(Boolean).pop() || fallbackName;
+            const heading = matches.length
+                ? cleanText.slice(0, matches[0].index).trim().split(/\n+/).filter(Boolean).pop() || fallbackName
+                : fallbackName;
             const titleMatch = heading.match(/(?:Drivers Ed )?Module \d+/i);
-            const title = titleMatch ? titleMatch[0].trim() : heading;
-            const entries = matches.map((match, index) =&gt; {
+            let title = titleMatch ? titleMatch[0].trim() : heading;
+            let entries = matches.map((match, index) =&gt; {
                 const start = match.index + match[0].length;
                 const end = index + 1 &lt; matches.length ? matches[index + 1].index : cleanText.length;
-                return {
-                    num: Number(match[1]),
-                    raw: cleanText.slice(start, end).trim()
-                };
+                return { num: Number(match[1]), raw: cleanText.slice(start, end).trim() };
             }).filter(entry =&gt; entry.raw);
 
             if (!entries.length) {
-                throw new Error('No numbered Quizlet cards were found. Include entries such as "1. Term".');
+                const body = cleanText;
+                const lines = body.split(/\r?\n/).map(line =&gt; line.trim()).filter(Boolean);
+                const blocks = body.split(/\r?\n\s*\r?\n+/).map(block =&gt; block.trim()).filter(Boolean);
+                if (lines.some(line =&gt; line.includes('\t'))) {
+                    const hasTitle = lines.length &gt; 1 &amp;&amp; !lines[0].includes('\t') &amp;&amp;
+                        lines.slice(1).every(line =&gt; line.includes('\t'));
+                    const rows = hasTitle ? lines.slice(1) : lines;
+                    if (hasTitle) title = lines[0];
+                    entries = rows.map((line, index) =&gt; ({
+                        num: index + 1,
+                        raw: line.split('\t').map(part =&gt; part.trim()).filter(Boolean).join('\n')
+                    }));
+                } else if (blocks.length &gt; 1) {
+                    if (/^(?:drivers ed )?module \d+$/i.test(blocks[0])) {
+                        title = blocks.shift();
+                    }
+                    entries = blocks.map((raw, index) =&gt; ({ num: index + 1, raw }));
+                } else if (lines.length &gt;= 2) {
+                    if (/^(?:drivers ed )?module \d+$/i.test(lines[0])) {
+                        title = lines.shift();
+                    }
+                    entries = [];
+                    for (let index = 0; index &lt; lines.length; index += 2) {
+                        entries.push({
+                            num: entries.length + 1,
+                            raw: lines[index + 1] ? `${lines[index]}\n${lines[index + 1]}` : lines[index]
+                        });
+                    }
+                } else if (lines.length) {
+                    entries = lines.map((raw, index) =&gt; ({ num: index + 1, raw }));
+                }
+            }
+
+            if (!entries.length) {
+                throw new Error('No cards were found. Paste numbered cards, tab-separated Quizlet export, or one card per blank-separated block.');
             }
             return { title, entries };
         }
@@ -920,7 +964,9 @@
                 question: entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean).join(' '),
                 sourceText: entry.raw,
                 answer: '',
-                highlights: []
+                highlights: [],
+                kind: 'fact',
+                searchTerms: []
             };
         }
 
@@ -962,17 +1008,49 @@
             return null;
         }
 
+        function getChoiceOptions(source) {
+            return source.split(/\n+/).map(line =&gt; {
+                const match = line.match(/^\s*(?:\(([A-H])\)|([A-H])[.)])\s+(.+?)\s*$/i);
+                return match ? { letter: (match[1] || match[2]).toUpperCase(), text: match[3] } : null;
+            }).filter(Boolean);
+        }
+
+        function resolveModelAnswer(answer, source) {
+            const letter = answer.trim().match(/^(?:option\s*)?([A-H])(?:[.)])?$/i)?.[1]?.toUpperCase();
+            const choices = getChoiceOptions(source);
+            if (letter) return choices.find(option =&gt; option.letter === letter)?.text || answer.trim();
+            const normalizedAnswer = normalizedSourceText(answer);
+            const matchingChoices = choices.filter(option =&gt;
+                phraseOccursInAnswer(option.text, normalizedAnswer)
+            );
+            return matchingChoices.length === 1 ? matchingChoices[0].text : answer.trim();
+        }
+
+        const HIGHLIGHT_KINDS = new Set(['rule', 'action', 'term', 'number', 'warning', 'definition', 'fact']);
+        const SEARCH_STOP_WORDS = new Set(['a', 'about', 'an', 'and', 'are', 'can', 'do', 'does', 'for', 'how', 'i', 'in', 'is', 'it', 'me', 'of', 'on', 'or', 'should', 'tell', 'the', 'to', 'what', 'when', 'where', 'which', 'who', 'why', 'with']);
+
         function validModelCard(entry, item) {
-            if (!item) return null;
-            const answer = typeof item.answer === 'string' ? item.answer.trim() : '';
-            if (!answer || !phraseOccursInAnswer(entry.raw, answer)) return null;
-            if (/^[A-H][.)]?$/i.test(answer)) return null;
+            const preserved = preserveCard(entry);
+            if (!item) return preserved;
+            const kind = typeof item.kind === 'string' &amp;&amp; HIGHLIGHT_KINDS.has(item.kind.toLowerCase())
+                ? item.kind.toLowerCase()
+                : 'fact';
+            const searchTerms = Array.isArray(item.keywords)
+                ? [...new Set(item.keywords
+                    .filter(keyword =&gt; typeof keyword === 'string')
+                    .map(keyword =&gt; keyword.trim().slice(0, 60))
+                    .filter(Boolean))].slice(0, 4)
+                : [];
+            const answer = typeof item.answer === 'string' ? resolveModelAnswer(item.answer, entry.raw) : '';
+            if (!answer || !phraseOccursInAnswer(entry.raw, answer)) {
+                return { ...preserved, kind, searchTerms };
+            }
             return {
-                num: entry.num,
-                question: entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean).join(' '),
-                sourceText: entry.raw,
+                ...preserved,
                 answer,
-                highlights: getHighlightPhrases(entry.raw, answer)
+                highlights: getHighlightPhrases(entry.raw, answer),
+                kind,
+                searchTerms
             };
         }
 
@@ -980,34 +1058,26 @@
             const parser = await getParserPipeline();
             const items = [];
             const errors = [];
+            const systemPrompt = 'Parse each driving study card. Return only JSON: {"answer":"exact phrase","kind":"rule|action|term|number|warning|definition|fact","keywords":["related term"]}. Solve it using the card and your knowledge. Copy the full correct choice, not its letter. Add at most two short related search terms. For driver-safety questions, choose the safest legal action. No explanation.';
+            const examples = [
+                { role: 'user', content: 'Card: What is 2 + 2?\nA. 3\nB. 4\nC. 5' },
+                { role: 'assistant', content: '{"answer":"4","kind":"number","keywords":["addition","math"]}' },
+                { role: 'user', content: 'Card: Tire pressure should be checked _____.\nweekly' },
+                { role: 'assistant', content: '{"answer":"weekly","kind":"rule","keywords":["tire pressure","maintenance"]}' },
+                { role: 'user', content: 'Card: On a wet road, what helps maintain a safe following gap?\nA. Increase following distance\nB. Follow closely\nC. Brake hard in turns' },
+                { role: 'assistant', content: '{"answer":"Increase following distance","kind":"action","keywords":["rain","safe gap"]}' }
+            ];
             for (let index = 0; index &lt; entries.length; index++) {
                 const entry = entries[index];
                 setModelStatus(`Interpreting card ${index + 1} of ${entries.length}...`);
                 const messages = [
-                    {
-                        role: 'system',
-                        content: 'For each Quizlet card, return exactly one JSON object like {"answer":"4"}. Answer using the card and your knowledge. Copy the exact answer phrase from the card; for choices, copy the full option, not its letter. For driver-safety questions, choose the safest legal action. If there is no answer, use an empty string.'
-                    },
-                    {
-                        role: 'user',
-                        content: 'Card: What is 2 + 2?\nA. 3\nB. 4\nC. 5'
-                    },
-                    { role: 'assistant', content: '{"answer":"4"}' },
-                    {
-                        role: 'user',
-                        content: 'Card: Tire pressure should be checked _____.\nweekly'
-                    },
-                    { role: 'assistant', content: '{"answer":"weekly"}' },
-                    {
-                        role: 'user',
-                        content: 'Card: On a wet road, what helps maintain a safe following gap?\nA. Increase following distance\nB. Follow closely\nC. Brake hard in turns'
-                    },
-                    { role: 'assistant', content: '{"answer":"Increase following distance"}' },
+                    { role: 'system', content: systemPrompt },
+                    ...examples,
                     { role: 'user', content: `Card: ${entry.raw}` }
                 ];
                 try {
                     const output = await parser(messages, {
-                        max_new_tokens: Math.min(96, Math.max(40, Math.ceil(24 + entry.raw.length / 8))),
+                        max_new_tokens: 48,
                         do_sample: false,
                     });
                     const generated = output[0]?.generated_text;
@@ -1147,12 +1217,13 @@
                     const question = item.question || item.q || item.sentence || '';
                     const answer = item.answer || item.a || '';
                     const sourceText = item.sourceText || question;
-                    const searchableText = `${sourceText} ${answer}`.toLowerCase();
+                    const searchTerms = Array.isArray(item.searchTerms) ? item.searchTerms.join(' ') : '';
+                    const searchableText = normalizedSourceText(`${sourceText} ${answer} ${searchTerms} ${item.kind || ''}`);
                     const displayText = cardTextForDisplay(sourceText);
                     const highlights = answer
                         ? getHighlightPhrases(displayText, answer)
                         : [];
-                    const cardHtml = highlightImportantText(displayText, highlights);
+                    const cardHtml = highlightImportantText(displayText, highlights, item.kind);
                     return `&lt;li data-search="${escapeHtml(searchableText)}"&gt;&lt;span class="study-question"&gt;${cardHtml}&lt;/span&gt;&lt;/li&gt;`;
                 }).join('');
 
@@ -1172,7 +1243,8 @@
 
         // Filter Logic
         function filterSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const query = normalizedSourceText(document.getElementById('searchInput').value);
+            const queryTerms = query ? query.split(' ').filter(term =&gt; !SEARCH_STOP_WORDS.has(term)) : [];
             const cards = document.querySelectorAll('.module-card');
 
             cards.forEach(card =&gt; {
@@ -1180,8 +1252,18 @@
                 let matchesInCard = false;
 
                 rows.forEach(row =&gt; {
-                    const text = row.dataset.search;
-                    if (text.includes(query)) {
+                    const index = row.dataset.search;
+                    let indexedTerms = searchTokenCache.get(row);
+                    if (!indexedTerms) {
+                        indexedTerms = index.split(' ');
+                        searchTokenCache.set(row, indexedTerms);
+                    }
+                    const matchCount = queryTerms.filter(term =&gt;
+                        indexedTerms.some(indexedTerm =&gt; indexedTerm.startsWith(term))
+                    ).length;
+                    const requiredMatches = queryTerms.length &lt; 3 ? 1 : Math.ceil(queryTerms.length * 0.6);
+                    const matches = !queryTerms.length || index.includes(query) || matchCount &gt;= requiredMatches;
+                    if (matches) {
                         row.classList.remove('hidden');
                         matchesInCard = true;
                     } else {
@@ -1197,13 +1279,14 @@
             });
         }
 
-        function highlightImportantText(text, highlights) {
+        function highlightImportantText(text, highlights, kind = 'fact') {
             const phrases = (Array.isArray(highlights) ? highlights : [highlights])
                 .filter(phrase =&gt; typeof phrase === 'string' &amp;&amp; phrase.trim())
                 .map(phrase =&gt; phrase.trim())
                 .sort((left, right) =&gt; right.length - left.length);
             if (!phrases.length) return escapeHtml(text);
 
+            const highlightKind = HIGHLIGHT_KINDS.has(kind) ? kind : 'fact';
             const markedPhrases = new Set(phrases.map(normalizedSourceText));
             const alternatives = phrases.map(phrase =&gt; phrase
                 .split(/[^\p{L}\p{N}]+/u)
@@ -1211,11 +1294,9 @@
                 .map(word =&gt; word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&amp;'))
                 .join('[^\\p{L}\\p{N}]+'));
             const pattern = new RegExp(`(?&lt;![\\p{L}\\p{N}])(${alternatives.join('|')})(?![\\p{L}\\p{N}])`, 'giu');
-            let highlightIndex = 0;
             return text.split(pattern).map(part =&gt; {
                 if (!markedPhrases.has(normalizedSourceText(part))) return escapeHtml(part);
-                const tone = highlightIndex++ % 3;
-                return `&lt;mark class="highlight-tone-${tone}"&gt;${escapeHtml(part)}&lt;/mark&gt;`;
+                return `&lt;mark class="highlight-${highlightKind}"&gt;${escapeHtml(part)}&lt;/mark&gt;`;
             }).join('');
         }
 
