@@ -639,6 +639,81 @@
         const ONNX_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0-dev.20250409-89f8206ba4/dist/';
         let parserPipelinePromise;
         let localModelAssetsPromise;
+        let parserWorker;
+        let workerRequestId = 0;
+        const workerRequests = new Map();
+
+        function runParserWorker(modelName, revision, transformersUrl, wasmUrl) {
+            let parser;
+            let modelAssets;
+
+            self.onmessage = async event => {
+                const message = event.data;
+                if (message.type === 'init') {
+                    try {
+                        modelAssets = new Map(message.assets.map(([path, buffer]) => [path, new Uint8Array(buffer)]));
+                        const { env, pipeline } = await import(transformersUrl);
+                        env.useBrowserCache = false;
+                        env.useFSCache = false;
+                        env.useCustomCache = true;
+                        env.customCache = {
+                            async match(...keys) {
+                                for (const key of keys) {
+                                    const value = typeof key === 'string' ? key : key?.url;
+                                    const marker = `/${modelName}/resolve/${revision}/`;
+                                    const markerIndex = value?.indexOf(marker) ?? -1;
+                                    const path = markerIndex === -1 ? '' : value.slice(markerIndex + marker.length).split('?')[0];
+                                    const contents = modelAssets.get(path);
+                                    if (contents) return new Response(contents);
+                                }
+                                return undefined;
+                            },
+                            async put(key, response) {
+                                const value = typeof key === 'string' ? key : key?.url;
+                                const marker = `/${modelName}/resolve/${revision}/`;
+                                const markerIndex = value?.indexOf(marker) ?? -1;
+                                if (markerIndex === -1) throw new Error('Transformers.js requested a model file outside the local bundle.');
+                                const path = value.slice(markerIndex + marker.length).split('?')[0];
+                                modelAssets.set(path, new Uint8Array(await response.arrayBuffer()));
+                            }
+                        };
+                        env.allowRemoteModels = false;
+                        env.allowLocalModels = true;
+                        env.remoteHost = 'https://embedded-model.invalid/';
+                        env.backends.onnx.wasm.wasmPaths = wasmUrl;
+                        env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
+                            ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
+                            : 1;
+                        parser = await pipeline('text-generation', modelName, {
+                            revision,
+                            device: 'wasm',
+                            dtype: 'q8',
+                            progress_callback: progress => {
+                                const detail = progress.file || progress.status || 'Preparing model';
+                                const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
+                                self.postMessage({ type: 'progress', message: `Loading local AI ${detail}${percent}` });
+                            }
+                        });
+                        self.postMessage({ type: 'ready' });
+                    } catch (error) {
+                        self.postMessage({ type: 'init-error', error: error instanceof Error ? error.message : String(error) });
+                    }
+                    return;
+                }
+                if (message.type !== 'generate' || !parser) return;
+
+                try {
+                    const output = await parser(message.messages, message.options);
+                    self.postMessage({ type: 'result', id: message.id, output });
+                } catch (error) {
+                    self.postMessage({
+                        type: 'request-error',
+                        id: message.id,
+                        error: error instanceof Error ? error.message : String(error)
+                    });
+                }
+            };
+        }
 
         function setModelStatus(message) {
             document.querySelectorAll('.model-status').forEach(status => {
@@ -812,74 +887,78 @@
             return assets;
         }
 
-        function createLocalModelCache(assets) {
-            function getModelPath(key) {
-                const value = typeof key === 'string' ? key : key?.url;
-                if (!value) return '';
-                const marker = `/${PARSER_MODEL}/resolve/${PARSER_REVISION}/`;
-                const markerIndex = value.indexOf(marker);
-                return markerIndex === -1 ? '' : value.slice(markerIndex + marker.length).split('?')[0];
-            }
-
-            return {
-                async match(...keys) {
-                    for (const key of keys) {
-                        const contents = assets.get(getModelPath(key));
-                        if (contents) return new Response(contents);
-                    }
-                    return undefined;
-                },
-                async put(key, response) {
-                    const path = getModelPath(key);
-                    if (!path) throw new Error('Transformers.js requested a model file outside the local bundle.');
-                    assets.set(path, new Uint8Array(await response.arrayBuffer()));
-                }
-            };
-        }
-
-        async function getParserPipeline() {
+        function getParserPipeline() {
             if (!parserPipelinePromise) {
                 parserPipelinePromise = (async () => {
                     const modelAssets = await getLocalModelAssets();
-                    let transformers;
-                    try {
-                        transformers = await import(TRANSFORMERS_URL);
-                    } catch (error) {
-                        throw new Error(`Could not load Transformers.js from jsDelivr (${error.message}). Check the network or allow cdn.jsdelivr.net.`);
-                    }
-
-                    const { env, pipeline } = transformers;
-                    env.useBrowserCache = false;
-                    env.useFSCache = false;
-                    env.useCustomCache = true;
-                    env.customCache = createLocalModelCache(modelAssets);
-                    env.allowRemoteModels = false;
-                    env.allowLocalModels = true;
-                    env.remoteHost = 'https://embedded-model.invalid/';
-                    env.backends.onnx.wasm.wasmPaths = ONNX_WASM_URL;
-                    env.backends.onnx.wasm.numThreads = self.crossOriginIsolated
-                        ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1))
-                        : 1;
-
-                    const progress_callback = progress => {
-                        const detail = progress.file || progress.status || 'Preparing model';
-                        const percent = Number.isFinite(progress.progress) ? ` ${Math.round(progress.progress)}%` : '';
-                        setModelStatus(`Loading local AI ${detail}${percent}`);
+                    const workerSource = `(${runParserWorker.toString()})(${JSON.stringify(PARSER_MODEL)},${JSON.stringify(PARSER_REVISION)},${JSON.stringify(TRANSFORMERS_URL)},${JSON.stringify(ONNX_WASM_URL)});`;
+                    const workerUrl = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
+                    const worker = new Worker(workerUrl, { type: 'module' });
+                    parserWorker = worker;
+                    let resolveReady;
+                    let rejectReady;
+                    const ready = new Promise((resolve, reject) => {
+                        resolveReady = resolve;
+                        rejectReady = reject;
+                    });
+                    let initialized = false;
+                    worker.onmessage = event => {
+                        const message = event.data;
+                        if (message.type === 'progress') {
+                            setModelStatus(message.message);
+                        } else if (message.type === 'ready') {
+                            initialized = true;
+                            resolveReady();
+                            URL.revokeObjectURL(workerUrl);
+                        } else if (message.type === 'init-error') {
+                            URL.revokeObjectURL(workerUrl);
+                            rejectReady(new Error(message.error));
+                        } else {
+                            const request = workerRequests.get(message.id);
+                            if (!request) return;
+                            workerRequests.delete(message.id);
+                            if (message.type === 'result') request.resolve(message.output);
+                            else request.reject(new Error(message.error || 'Local AI worker failed.'));
+                        }
                     };
-                    setModelStatus('Starting local AI on CPU...');
-                    try {
-                        return await pipeline('text-generation', PARSER_MODEL, {
-                            revision: PARSER_REVISION,
-                            device: 'wasm',
-                            dtype: 'q8',
-                            progress_callback
-                        });
-                    } catch (error) {
-                        throw new Error(`Local AI could not initialize: ${error.message}`);
-                    }
+                    const handleWorkerError = event => {
+                        const error = new Error(event.message || 'Local AI worker stopped unexpectedly.');
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        if (parserWorker === worker) parserWorker = null;
+                        if (!initialized) rejectReady(error);
+                        for (const [id, request] of workerRequests) {
+                            workerRequests.delete(id);
+                            request.reject(error);
+                        }
+                    };
+                    worker.onerror = handleWorkerError;
+                    worker.onmessageerror = () => handleWorkerError({ message: 'Local AI worker returned an unreadable response.' });
+                    const transfer = [];
+                    const assets = Array.from(modelAssets, ([path, bytes]) => {
+                        transfer.push(bytes.buffer);
+                        return [path, bytes.buffer];
+                    });
+                    modelAssets.clear();
+                    setModelStatus('Starting local AI in background...');
+                    worker.postMessage({ type: 'init', assets }, transfer);
+                    await ready;
+                    return (messages, options) => new Promise((resolve, reject) => {
+                        const id = ++workerRequestId;
+                        workerRequests.set(id, { resolve, reject });
+                        if (!parserWorker) {
+                            workerRequests.delete(id);
+                            reject(new Error('Local AI worker is unavailable.'));
+                            return;
+                        }
+                        parserWorker.postMessage({ type: 'generate', id, messages, options });
+                    });
                 })().catch(error => {
+                    parserWorker?.terminate();
+                    parserWorker = null;
                     parserPipelinePromise = null;
-                    throw error;
+                    localModelAssetsPromise = null;
+                    throw new Error(`Could not start local AI in a background worker: ${error.message}`);
                 });
             }
             return parserPipelinePromise;
