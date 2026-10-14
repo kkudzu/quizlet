@@ -307,6 +307,12 @@
             font-size: 0.78rem;
         }
 
+        .empty-state {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
         /* Module Card & Tables */
         .module-card {
             background: transparent;
@@ -351,6 +357,7 @@
         .study-question {
             display: block;
             font-weight: 500;
+            white-space: pre-line;
         }
 
         .study-answer {
@@ -564,7 +571,7 @@
         <div class="top-banner">
             <div>
                 <h1 class="page-title">Study notes</h1>
-                <p class="page-description">Search across your study modules</p>
+                <p class="page-description">Paste or upload a Quizlet set to build study modules</p>
             </div>
             <div class="stat-group">
                 <div class="stat-item">
@@ -587,71 +594,6 @@
     <script>
         const moduleStore = [];
 
-        // Preloaded Module 2 Data
-        const module2Data = {
-            title: "Drivers Ed Module 2",
-            items: [
-                { num: 1, q: "Correct procedure for securing a vehicle: stop, set parking brake, place gear selector in park, turn off accessories, turn ignition off, lock ignition and remove key, remove occupant restraints, check traffic and exit vehicle, secure doors", a: "True" },
-                { num: 2, q: "The side view mirrors should be adjusted to the contemporary (BGE) mirror setting, which means the driver can see _____", a: "the vehicles in the lanes beside his/her vehicle" },
-                { num: 3, q: "Driving with the hands in the 8 o'clock and 4 o'clock position _____", a: "reduces excessive steering. helps protect the driver from airbag injuries improves vehicle stability" },
-                { num: 4, q: "The driver should set accessories before putting the vehicle in drive.", a: "True" },
-                { num: 5, q: "Tire pressure should be checked _____", a: "weekly" },
-                { num: 6, q: "When the mirrors are set correctly, there is no need to check blind zones.", a: "False" },
-                { num: 7, q: "The oil should be changed every _____", a: "3000-5000 miles" },
-                { num: 8, q: "The lap belt should be adjusted to fit snugly _____", a: "across the hips" },
-                { num: 9, q: "When seated properly, the driver's chin should be above the steering wheel", a: "True" },
-                { num: 10, q: "To adjust the side view mirror for the BGE mirror setting, the driver should sit in the driving position", a: "False" },
-                { num: 11, q: "Locking the door ensures that they will not fly open during a crash.", a: "False" },
-                { num: 12, q: "When seated properly, the driver should be at least _____ inches from the steering wheel.", a: "10" },
-                { num: 13, q: "The steering wheel should be adjusted upward towards the face", a: "False" },
-                { num: 14, q: "___ is the routine care you give your vehicle is outlined in the owner's manual includes checking fluids", a: "Preventative maintenance" },
-                { num: 15, q: "When using the accelerator and brake pedal, the heel of the foot should remain on the floor.", a: "True" },
-                { num: 16, q: "The head restraint should be adjusted", a: "Just above the ears" },
-                { num: 17, q: "The rearview mirror should be adjusted to frame the back windshield.", a: "True" },
-                { num: 18, q: "All vehicles have adjustable head restraints.", a: "False" },
-                { num: 19, q: "The turn signal will always cancel after a turn.", a: "False" },
-                { num: 20, q: "The horn should NOT be used to ____", a: "Show Anger" },
-                { num: 21, q: "Head restraints are designed to help reduce _____.", a: "Whip lash injuries" },
-                { num: 22, q: "When the daytime running lights are in use, the tail lights are not on", a: "True" },
-                { num: 23, q: "Cruise control guidelines", a: "allows a driver to select and travel at a set speed / works at speeds above 25 mph / should not be used on slippery surfaces" },
-                { num: 24, q: "Position one on the ignition switch allows you to use accessories with the engine off.", a: "True" },
-                { num: 25, q: "Pedal extensions are available to allow short drivers to maintain a safe distance from the steering wheel.", a: "True" },
-                { num: 26, q: "Gears below drive, provide more engine power", a: "True" },
-                { num: 27, q: "Safety experts recommend the use of headlights whenever the vehicle is moving", a: "True" },
-                { num: 28, q: "When backing, the driver should turn the steering wheel to the right in order to back to the left.", a: "False" },
-                { num: 29, q: "When securing the vehicle, the parking brake should be set before placing the vehicle in Park.", a: "True" },
-                { num: 30, q: "If the driver needs to adjust the defroster, he/she should place the steering hand at the top of the steering wheel temporarily", a: "False" },
-                { num: 31, q: "Braking just short of lockup is known as _____.", a: "Threshold Braking" },
-                { num: 32, q: "Ideal vehicle balance is reached when _____.", a: "The Vehicle is stationary" },
-                { num: 33, q: "If your vehicle is not equipped with ABS, hard controlled braking should be done _____", a: "Prior to evasive steering" },
-                { num: 34, q: "One hand steering is recommended _____", a: "When backing" },
-                { num: 35, q: "Braking results in weight transfer _____.", a: "Forward" },
-                { num: 36, q: "Steering input to the left will result in weight transfer ___", a: "Right" },
-                { num: 37, q: "Weight transfer from side to side is known as ____", a: "Roll" },
-                { num: 38, q: "The steering technique best suited in limited space maneuvers is ___", a: "Hand over hand" },
-                { num: 39, q: "If understeer occurs, weight should be transferred to the _____", a: "Front" },
-                { num: 40, q: "Acceleration results in weight transfer to the _____", a: "Rear" },
-                { num: 41, q: "Weight transfer forward or backward is known as _____", a: "Pitch" },
-                { num: 42, q: "The steering technique best suited for maintaining vehicle balance is _____.", a: "Hand to hand" },
-                { num: 43, q: "Vehicle balance is maintained through _____.", a: "precise steering, smooth acceleration, controlled braking" },
-                { num: 44, q: "Line of sight definition", a: "is the distance you can see ahead in the direction you are looking" },
-                { num: 45, q: "The BGE mirror setting, ____", a: "Reduces blind spots and glare" },
-                { num: 46, q: "To correctly adjust the left side view mirrors, the driver will need to place his/her head against the side window.", a: "True" },
-                { num: 47, q: "When the pavement line or curb appears to run through the middle of the vehicle's hood, the vehicle is _____", a: "3-6 inches from the curb" },
-                { num: 48, q: "The vision used to judge depth and position is _____.", a: "central" },
-                { num: 49, q: "If the front bumper is 3-6 inches from the curb line, the line of sight will extend from the driver ___", a: "through the front window (near the mirror)" },
-                { num: 50, q: "Reference points are the same for all drivers.", a: "False" },
-                { num: 51, q: "In the contemporary mirror setting, the side view mirror is set to see the lane next to your vehicle", a: "True" },
-                { num: 52, q: "The BGE mirror is always the best mirror setting", a: "False" },
-                { num: 53, q: "What is the best lane position for a right turn?", a: "3" },
-                { num: 54, q: "___ are necessary to judge your vehicle's position because there are areas around the vehicle which cannot be seen from the driver's seat", a: "Reference points" },
-                { num: 55, q: "Blindzones are greatly reduced by the use of contemporary mirror settings.", a: "True" },
-                { num: 56, q: "The pavement area in front of the vehicle which cannot be seen by the driver is about 3 car lengths.", a: "False" },
-                { num: 57, q: "If there is a restriction within your line of sight, it is known as ___", a: "A closed area" },
-                { num: 58, q: "Blind spots are areas you cannot see in either your mirrors or peripheral vision", a: "True" }
-            ]
-        };
-
         let appDomReady = false;
         function hideStartupLoaderIfReady() {
             if (!appDomReady) return;
@@ -660,7 +602,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            moduleStore.push(module2Data);
             renderAllModules();
             appDomReady = true;
             hideStartupLoaderIfReady();
@@ -964,21 +905,61 @@
                 .filter(Boolean))];
         }
 
-        function getHighlightPhrases(answer, suggestions) {
-            const suggestedPhrases = Array.isArray(suggestions)
-                ? suggestions.filter(phrase => typeof phrase === 'string' && phraseOccursInAnswer(answer, phrase))
-                : [];
-            const answerPoints = splitAnswerHighlights(answer);
-            const hasMultiplePoints = answerPoints.length > 1;
-            const phrases = suggestedPhrases.length ? suggestedPhrases : answerPoints;
-            return [...new Set([...phrases, ...(hasMultiplePoints ? answerPoints : [])])];
+        function getHighlightPhrases(source, answer) {
+            return splitAnswerHighlights(answer)
+                .filter(phrase => phraseOccursInAnswer(source, phrase));
+        }
+
+        function cardTextForDisplay(source) {
+            return source.split(/\n/)
+                .filter(line => !/^\s*(?:correct answer|answer key|correct option)\s*[:=-]/i.test(line))
+                .map(line => line
+                    .replace(/\s+(?:correct answer|answer key|correct option)\s*[:=-]\s*.+$/i, '')
+                    .replace(/(^|\s)(?:answer|definition|response|solution)\s*[:=-]\s*/ig, '$1'))
+                .join('\n')
+                .trim();
+        }
+
+        function getChoiceOptions(source) {
+            return source.split(/\n+/).map(line => {
+                const match = line.match(/^\s*(?:\(([A-H])\)|([A-H])[.)])\s+(.+?)\s*$/i);
+                return match
+                    ? { letter: (match[1] || match[2]).toUpperCase(), text: match[3] }
+                    : null;
+            }).filter(Boolean);
+        }
+
+        function getAnswerKeyLetter(source) {
+            return source.match(/(?:^|\s)(?:correct\s+answer|answer\s+key|correct\s+option)\s*[:=-]\s*(?:option\s*)?([A-H])(?:[.)])?(?=\s|$)/i)?.[1]?.toUpperCase() || '';
+        }
+
+        function resolveChoiceAnswer(answer, source) {
+            const answerLetter = answer.trim().match(/^(?:option\s*)?([A-H])(?:[.)])?$/i)?.[1]?.toUpperCase();
+            if (!answerLetter) return answer.trim();
+
+            return getChoiceOptions(source).find(option => option.letter === answerLetter)?.text || answer.trim();
         }
 
         function parseCardLocally(entry) {
+            const answerMarker = entry.raw.match(/(?:^|\s)(?:correct\s+answer|answer\s+key|correct\s+option|answer|definition|response|solution)\s*[:=-]\s*/i);
+            if (answerMarker) {
+                const questionEnd = answerMarker.index + answerMarker[0].match(/^\s*/)[0].length;
+                const question = entry.raw.slice(0, questionEnd)
+                    .replace(/^(?:question|prompt|term)\s*:\s*/i, '')
+                    .trim();
+                const answer = resolveChoiceAnswer(entry.raw.slice(answerMarker.index + answerMarker[0].length), entry.raw);
+                if (question && answer) {
+                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
+                }
+            }
+
             const tabSeparated = entry.raw.split(/\t+/).map(line => line.trim()).filter(Boolean);
             if (tabSeparated.length >= 2) {
                 const question = tabSeparated.shift().replace(/^(?:question|prompt|term)\s*:\s*/i, '');
-                const answer = tabSeparated.join(' ').replace(/^(?:answer|definition|response)\s*:\s*/i, '');
+                const answer = resolveChoiceAnswer(
+                    tabSeparated.join(' ').replace(/^(?:correct\s+answer|answer|definition|response|solution)\s*[:=-]\s*/i, ''),
+                    entry.raw
+                );
                 if (question && answer) {
                     return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
                 }
@@ -995,10 +976,10 @@
                 }
             }
 
-            const inlineLabeled = entry.raw.match(/^(?:question|prompt|term)\s*:\s*(.+?)\s+(?:answer|definition|response)\s*:\s*([\s\S]+)$/i);
+            const inlineLabeled = entry.raw.match(/^(?:question|prompt|term)\s*:\s*(.+?)\s+(?:correct\s+answer|answer|definition|response|solution)\s*[:=-]\s*([\s\S]+)$/i);
             if (inlineLabeled) {
                 const question = inlineLabeled[1].trim();
-                const answer = inlineLabeled[2].trim();
+                const answer = resolveChoiceAnswer(inlineLabeled[2].trim(), entry.raw);
                 return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
             }
 
@@ -1027,6 +1008,8 @@
                 }
             }
 
+            if (getChoiceOptions(entry.raw).length >= 2) return null;
+
             if (lines.length < 2) return null;
 
             const questionIndex = lines.findIndex(line =>
@@ -1045,6 +1028,7 @@
             return {
                 num: entry.num,
                 question: entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean).join(' '),
+                sourceText: entry.raw,
                 answer: '',
                 highlights: []
             };
@@ -1088,26 +1072,26 @@
             return null;
         }
 
-        function validModelCardSplit(entry, item) {
+        function validModelCard(entry, item) {
             if (!item) return null;
-            const question = typeof item.question === 'string' ? item.question.trim() : '';
-            const answer = typeof item.answer === 'string' ? item.answer.trim() : '';
-            if (!question || !answer) return null;
-
-            const source = normalizedSourceText(entry.raw);
-            const normalizedQuestion = normalizedSourceText(question);
-            const normalizedAnswer = normalizedSourceText(answer);
-            const questionStart = source.indexOf(normalizedQuestion);
-            const answerStart = source.indexOf(normalizedAnswer);
-            const separate = questionStart >= 0 && answerStart >= 0 &&
-                (questionStart + normalizedQuestion.length <= answerStart ||
-                    answerStart + normalizedAnswer.length <= questionStart);
-            if (!separate) return null;
+            const answer = typeof item.answer === 'string'
+                ? resolveChoiceAnswer(item.answer, entry.raw)
+                : '';
+            if (!answer || !phraseOccursInAnswer(entry.raw, answer)) return null;
+            const choices = getChoiceOptions(entry.raw);
+            if (choices.length >= 2) {
+                const answerKey = getAnswerKeyLetter(entry.raw);
+                const keyedChoice = choices.find(choice => choice.letter === answerKey);
+                if (!keyedChoice || normalizedSourceText(keyedChoice.text) !== normalizedSourceText(answer)) {
+                    return null;
+                }
+            }
             return {
                 num: entry.num,
-                question,
+                question: entry.raw.split(/\n+/).map(line => line.trim()).filter(Boolean).join(' '),
+                sourceText: entry.raw,
                 answer,
-                highlights: getHighlightPhrases(answer, item.highlights)
+                highlights: getHighlightPhrases(entry.raw, answer)
             };
         }
 
@@ -1120,23 +1104,15 @@
                 const messages = [
                     {
                         role: 'system',
-                        content: 'Split one flashcard into its question and answer. Copy exact text only. Do not answer from memory. Return one JSON object with question, answer, and highlights.'
+                        content: 'Identify the answer in this flashcard. Copy exact text from the card; never invent or explain. For multiple-choice cards, only return a choice when the card includes an answer key; match the key to its option. If no answer key is provided or the answer is unclear, return an empty answer. Return only a JSON object with an answer string.'
                     },
                     {
                         role: 'user',
-                        content: 'Question: When should tire pressure be checked? Answer: Weekly.'
-                    },
-                    {
-                        role: 'assistant',
-                        content: '{"question":"When should tire pressure be checked?","answer":"Weekly.","highlights":["Weekly."]}'
-                    },
-                    {
-                        role: 'user',
-                        content: `Copy the question and answer exactly from this one card. For true/false, use the claim and its true/false answer. For a blank, keep the blank in the question and copy its answer.\n${entry.raw}\nReturn only the JSON object.`
+                        content: `Find the answer for this one Quizlet card. For a true/false card, return only True or False. For a fill-in-the-blank card, return the text that fills the blank. For a multiple-choice card, only answer if the card includes an answer key; return the exact full text of the keyed choice. For a term-definition card, return the definition. Do not include an answer label, letter, explanation, or text that does not appear in the card. If there is no answer key or you cannot determine the answer, return an empty answer.\n${entry.raw}\nReturn only {"answer":"exact answer text"}.`
                     }
                 ];
                 const output = await parser(messages, {
-                    max_new_tokens: Math.min(160, Math.max(96, Math.ceil(64 + entry.raw.length / 4))),
+                    max_new_tokens: Math.min(128, Math.max(48, Math.ceil(32 + entry.raw.length / 5))),
                     do_sample: false,
                 });
                 const generated = output[0]?.generated_text;
@@ -1146,7 +1122,7 @@
                         ? generated.at(-1)?.content || ''
                         : '';
                 const parsedItem = extractModelCard(content);
-                items.push(validModelCardSplit(entry, parsedItem) || preserveCard(entry));
+                items.push(validModelCard(entry, parsedItem) || preserveCard(entry));
             }
             return items;
         }
@@ -1158,12 +1134,15 @@
             let modelError = '';
             entries.forEach(entry => {
                 const item = parseCardLocally(entry);
-                if (item) resolved.set(entry.num, item);
+                if (item) {
+                    item.sourceText = entry.raw;
+                    resolved.set(entry.num, item);
+                }
                 else unresolved.push(entry);
             });
 
             if (unresolved.length) {
-                setModelStatus(`Paired ${resolved.size} cards locally; using on-device AI for ${unresolved.length} complex cards...`);
+                setModelStatus(`Found answers for ${resolved.size} cards locally; checking ${unresolved.length} complex cards with on-device AI...`);
                 try {
                     const modelItems = await parseWithModel(unresolved);
                     modelItems.forEach(item => resolved.set(item.num, item));
@@ -1173,12 +1152,13 @@
                 }
             }
             if (modelError) {
-                setModelStatus(`AI could not interpret some cards (${modelError}); all source cards were kept together.`);
+                setModelStatus(`AI could not check some answers (${modelError}); the original cards were kept intact.`);
             } else {
-                const aiFallbackCount = [...resolved.values()].filter(item => !item.answer).length;
-                setModelStatus(aiFallbackCount
-                    ? `Kept all ${entries.length} cards together; ${aiFallbackCount} could not be separated safely and remain in their original wording.`
-                    : `Paired all ${entries.length} question-and-answer cards without splitting them.`);
+                const highlightedCount = [...resolved.values()].filter(item => item.answer).length;
+                const unverifiedCount = entries.length - highlightedCount;
+                setModelStatus(unverifiedCount
+                    ? `Highlighted answers in ${highlightedCount} of ${entries.length} cards; kept ${unverifiedCount} together because their answers could not be identified confidently.`
+                    : `Highlighted answers in all ${entries.length} cards.`);
             }
             return { title, items: entries.map(entry => resolved.get(entry.num)) };
         }
@@ -1253,6 +1233,10 @@
 
             let totalQuestions = 0;
 
+            if (moduleStore.length === 0) {
+                container.innerHTML = '<p class="empty-state">No modules loaded yet. Paste Quizlet text or upload a .TXT file to get started.</p>';
+            }
+
             moduleStore.forEach((mod, index) => {
                 const modId = 'module-' + index;
                 totalQuestions += mod.items.length;
@@ -1270,15 +1254,14 @@
                 const studyItems = mod.items.map(item => {
                     const question = item.question || item.q || item.sentence || '';
                     const answer = item.answer || item.a || '';
-                    const searchableText = `${question} ${answer}`.toLowerCase();
-                    const questionHtml = escapeHtml(question);
-                    const highlights = item.highlights?.length
-                        ? item.highlights
-                        : item.highlight || splitAnswerHighlights(answer);
-                    const answerHtml = answer
-                        ? `<span class="study-answer">${highlightImportantText(answer, highlights)}</span>`
-                        : '';
-                    return `<li data-search="${escapeHtml(searchableText)}"><span class="study-question">${questionHtml}</span>${answerHtml}</li>`;
+                    const sourceText = item.sourceText || question;
+                    const searchableText = `${sourceText} ${answer}`.toLowerCase();
+                    const displayText = cardTextForDisplay(sourceText);
+                    const highlights = answer
+                        ? getHighlightPhrases(displayText, answer)
+                        : [];
+                    const cardHtml = highlightImportantText(displayText, highlights);
+                    return `<li data-search="${escapeHtml(searchableText)}"><span class="study-question">${cardHtml}</span></li>`;
                 }).join('');
 
                 card.innerHTML = `
@@ -1329,11 +1312,16 @@
                 .sort((left, right) => right.length - left.length);
             if (!phrases.length) return escapeHtml(text);
 
-            const markedPhrases = new Set(phrases.map(phrase => phrase.toLowerCase()));
-            const pattern = new RegExp(`(${phrases.map(phrase => phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+            const markedPhrases = new Set(phrases.map(normalizedSourceText));
+            const alternatives = phrases.map(phrase => phrase
+                .split(/[^\p{L}\p{N}]+/u)
+                .filter(Boolean)
+                .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                .join('[^\\p{L}\\p{N}]+'));
+            const pattern = new RegExp(`(?<![\\p{L}\\p{N}])(${alternatives.join('|')})(?![\\p{L}\\p{N}])`, 'giu');
             let highlightIndex = 0;
             return text.split(pattern).map(part => {
-                if (!markedPhrases.has(part.toLowerCase())) return escapeHtml(part);
+                if (!markedPhrases.has(normalizedSourceText(part))) return escapeHtml(part);
                 const tone = highlightIndex++ % 3;
                 return `<mark class="highlight-tone-${tone}">${escapeHtml(part)}</mark>`;
             }).join('');
