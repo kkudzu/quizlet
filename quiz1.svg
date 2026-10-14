@@ -899,16 +899,9 @@
             return { title, entries };
         }
 
-        function splitAnswerHighlights(answer) {
-            return [...new Set(answer
-                .split(/\s*(?:\/|;|\n|•)\s*/)
-                .map(point =&gt; point.trim())
-                .filter(Boolean))];
-        }
-
         function getHighlightPhrases(source, answer) {
-            return splitAnswerHighlights(answer)
-                .filter(phrase =&gt; phraseOccursInAnswer(source, phrase));
+            const phrase = answer.trim();
+            return phrase &amp;&amp; phraseOccursInAnswer(source, phrase) ? [phrase] : [];
         }
 
         function cardTextForDisplay(source) {
@@ -919,110 +912,6 @@
                     .replace(/(^|\s)(?:answer|definition|response|solution)\s*[:=-]\s*/ig, '$1'))
                 .join('\n')
                 .trim();
-        }
-
-        function getChoiceOptions(source) {
-            return source.split(/\n+/).map(line =&gt; {
-                const match = line.match(/^\s*(?:\(([A-H])\)|([A-H])[.)])\s+(.+?)\s*$/i);
-                return match
-                    ? { letter: (match[1] || match[2]).toUpperCase(), text: match[3] }
-                    : null;
-            }).filter(Boolean);
-        }
-
-        function getAnswerKeyLetter(source) {
-            return source.match(/(?:^|\s)(?:correct\s+answer|answer\s+key|correct\s+option)\s*[:=-]\s*(?:option\s*)?([A-H])(?:[.)])?(?=\s|$)/i)?.[1]?.toUpperCase() || '';
-        }
-
-        function resolveChoiceAnswer(answer, source) {
-            const answerLetter = answer.trim().match(/^(?:option\s*)?([A-H])(?:[.)])?$/i)?.[1]?.toUpperCase();
-            if (!answerLetter) return answer.trim();
-
-            return getChoiceOptions(source).find(option =&gt; option.letter === answerLetter)?.text || answer.trim();
-        }
-
-        function parseCardLocally(entry) {
-            const answerMarker = entry.raw.match(/(?:^|\s)(?:correct\s+answer|answer\s+key|correct\s+option|answer|definition|response|solution)\s*[:=-]\s*/i);
-            if (answerMarker) {
-                const questionEnd = answerMarker.index + answerMarker[0].match(/^\s*/)[0].length;
-                const question = entry.raw.slice(0, questionEnd)
-                    .replace(/^(?:question|prompt|term)\s*:\s*/i, '')
-                    .trim();
-                const answer = resolveChoiceAnswer(entry.raw.slice(answerMarker.index + answerMarker[0].length), entry.raw);
-                if (question &amp;&amp; answer) {
-                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-                }
-            }
-
-            const tabSeparated = entry.raw.split(/\t+/).map(line =&gt; line.trim()).filter(Boolean);
-            if (tabSeparated.length &gt;= 2) {
-                const question = tabSeparated.shift().replace(/^(?:question|prompt|term)\s*:\s*/i, '');
-                const answer = resolveChoiceAnswer(
-                    tabSeparated.join(' ').replace(/^(?:correct\s+answer|answer|definition|response|solution)\s*[:=-]\s*/i, ''),
-                    entry.raw
-                );
-                if (question &amp;&amp; answer) {
-                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-                }
-            }
-
-            const lines = entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean);
-            const labeledQuestion = lines.findIndex(line =&gt; /^(?:question|prompt|term)\s*:/i.test(line));
-            const labeledAnswer = lines.findIndex(line =&gt; /^(?:answer|definition|response)\s*:/i.test(line));
-            if (labeledQuestion !== -1 &amp;&amp; labeledAnswer !== -1) {
-                const question = lines[labeledQuestion].replace(/^(?:question|prompt|term)\s*:/i, '').trim();
-                const answer = lines[labeledAnswer].replace(/^(?:answer|definition|response)\s*:/i, '').trim();
-                if (question &amp;&amp; answer) {
-                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-                }
-            }
-
-            const inlineLabeled = entry.raw.match(/^(?:question|prompt|term)\s*:\s*(.+?)\s+(?:correct\s+answer|answer|definition|response|solution)\s*[:=-]\s*([\s\S]+)$/i);
-            if (inlineLabeled) {
-                const question = inlineLabeled[1].trim();
-                const answer = resolveChoiceAnswer(inlineLabeled[2].trim(), entry.raw);
-                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-            }
-
-            const inlineQuestion = entry.raw.match(/^(.+?\?)\s+(.+)$/);
-            if (inlineQuestion) {
-                const question = inlineQuestion[1].trim();
-                const answer = inlineQuestion[2].trim();
-                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-            }
-
-            const boolIndex = lines.findIndex(line =&gt; /^(true|false)[.!]?$/i.test(line));
-            if (boolIndex !== -1) {
-                const answer = lines[boolIndex].replace(/[.!]$/, '').toLowerCase();
-                const question = lines.filter((_, index) =&gt; index !== boolIndex).join(' ').trim();
-                if (question) {
-                    return { num: entry.num, question, answer, highlights: [answer] };
-                }
-            }
-
-            const blankIndex = lines.findIndex(line =&gt; /_{2,}|…{2,}|\.{3,}/.test(line));
-            if (blankIndex !== -1) {
-                const question = lines[blankIndex];
-                const answer = lines.filter((_, index) =&gt; index !== blankIndex).join(' ').trim();
-                if (answer) {
-                    return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-                }
-            }
-
-            if (getChoiceOptions(entry.raw).length &gt;= 2) return null;
-
-            if (lines.length &lt; 2) return null;
-
-            const questionIndex = lines.findIndex(line =&gt;
-                /\?$/.test(line) || /^(?:what|which|who|where|when|why|how|define|identify|name|list|explain)\b/i.test(line)
-            );
-            const selectedQuestion = questionIndex === -1 ? 0 : questionIndex;
-            const question = lines[selectedQuestion];
-            const answer = lines.filter((_, index) =&gt; index !== selectedQuestion).join(' ').trim();
-            if (question &amp;&amp; answer) {
-                return { num: entry.num, question, answer, highlights: splitAnswerHighlights(answer) };
-            }
-            return null;
         }
 
         function preserveCard(entry) {
@@ -1075,18 +964,9 @@
 
         function validModelCard(entry, item) {
             if (!item) return null;
-            const answer = typeof item.answer === 'string'
-                ? resolveChoiceAnswer(item.answer, entry.raw)
-                : '';
+            const answer = typeof item.answer === 'string' ? item.answer.trim() : '';
             if (!answer || !phraseOccursInAnswer(entry.raw, answer)) return null;
-            const choices = getChoiceOptions(entry.raw);
-            if (choices.length &gt;= 2) {
-                const answerKey = getAnswerKeyLetter(entry.raw);
-                const keyedChoice = choices.find(choice =&gt; choice.letter === answerKey);
-                if (!keyedChoice || normalizedSourceText(keyedChoice.text) !== normalizedSourceText(answer)) {
-                    return null;
-                }
-            }
+            if (/^[A-H][.)]?$/i.test(answer)) return null;
             return {
                 num: entry.num,
                 question: entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean).join(' '),
@@ -1099,69 +979,80 @@
         async function parseWithModel(entries) {
             const parser = await getParserPipeline();
             const items = [];
+            const errors = [];
             for (let index = 0; index &lt; entries.length; index++) {
                 const entry = entries[index];
                 setModelStatus(`Interpreting card ${index + 1} of ${entries.length}...`);
                 const messages = [
                     {
                         role: 'system',
-                        content: 'Identify the answer in this flashcard. Copy exact text from the card; never invent or explain. For multiple-choice cards, only return a choice when the card includes an answer key; match the key to its option. If no answer key is provided or the answer is unclear, return an empty answer. Return only a JSON object with an answer string.'
+                        content: 'For each Quizlet card, return exactly one JSON object like {"answer":"4"}. Answer using the card and your knowledge. Copy the exact answer phrase from the card; for choices, copy the full option, not its letter. For driver-safety questions, choose the safest legal action. If there is no answer, use an empty string.'
                     },
                     {
                         role: 'user',
-                        content: `Find the answer for this one Quizlet card. For a true/false card, return only True or False. For a fill-in-the-blank card, return the text that fills the blank. For a multiple-choice card, only answer if the card includes an answer key; return the exact full text of the keyed choice. For a term-definition card, return the definition. Do not include an answer label, letter, explanation, or text that does not appear in the card. If there is no answer key or you cannot determine the answer, return an empty answer.\n${entry.raw}\nReturn only {"answer":"exact answer text"}.`
-                    }
+                        content: 'Card: What is 2 + 2?\nA. 3\nB. 4\nC. 5'
+                    },
+                    { role: 'assistant', content: '{"answer":"4"}' },
+                    {
+                        role: 'user',
+                        content: 'Card: Tire pressure should be checked _____.\nweekly'
+                    },
+                    { role: 'assistant', content: '{"answer":"weekly"}' },
+                    {
+                        role: 'user',
+                        content: 'Card: On a wet road, what helps maintain a safe following gap?\nA. Increase following distance\nB. Follow closely\nC. Brake hard in turns'
+                    },
+                    { role: 'assistant', content: '{"answer":"Increase following distance"}' },
+                    { role: 'user', content: `Card: ${entry.raw}` }
                 ];
-                const output = await parser(messages, {
-                    max_new_tokens: Math.min(128, Math.max(48, Math.ceil(32 + entry.raw.length / 5))),
-                    do_sample: false,
-                });
-                const generated = output[0]?.generated_text;
-                const content = typeof generated === 'string'
-                    ? generated
-                    : Array.isArray(generated)
-                        ? generated.at(-1)?.content || ''
-                        : '';
-                const parsedItem = extractModelCard(content);
-                items.push(validModelCard(entry, parsedItem) || preserveCard(entry));
+                try {
+                    const output = await parser(messages, {
+                        max_new_tokens: Math.min(96, Math.max(40, Math.ceil(24 + entry.raw.length / 8))),
+                        do_sample: false,
+                    });
+                    const generated = output[0]?.generated_text;
+                    const content = typeof generated === 'string'
+                        ? generated
+                        : Array.isArray(generated)
+                            ? generated.at(-1)?.content || ''
+                            : '';
+                    const parsedItem = extractModelCard(content);
+                    items.push(validModelCard(entry, parsedItem) || preserveCard(entry));
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    errors.push(`card ${entry.num}: ${message}`);
+                    items.push(preserveCard(entry));
+                }
             }
-            return items;
+            return { items, errors };
         }
 
         async function parseQuizletText(rawText, fallbackName) {
             const { title, entries } = getQuizletEntries(rawText, fallbackName);
-            const resolved = new Map();
-            const unresolved = [];
+            setModelStatus(`Loading local AI to interpret all ${entries.length} cards...`);
+            let parsedItems;
             let modelError = '';
-            entries.forEach(entry =&gt; {
-                const item = parseCardLocally(entry);
-                if (item) {
-                    item.sourceText = entry.raw;
-                    resolved.set(entry.num, item);
-                }
-                else unresolved.push(entry);
-            });
-
-            if (unresolved.length) {
-                setModelStatus(`Found answers for ${resolved.size} cards locally; checking ${unresolved.length} complex cards with on-device AI...`);
-                try {
-                    const modelItems = await parseWithModel(unresolved);
-                    modelItems.forEach(item =&gt; resolved.set(item.num, item));
-                } catch (error) {
-                    modelError = error instanceof Error ? error.message : String(error);
-                    unresolved.forEach(entry =&gt; resolved.set(entry.num, preserveCard(entry)));
-                }
+            let cardErrors = [];
+            try {
+                const result = await parseWithModel(entries);
+                parsedItems = result.items;
+                cardErrors = result.errors;
+            } catch (error) {
+                modelError = error instanceof Error ? error.message : String(error);
+                parsedItems = entries.map(preserveCard);
             }
+            const highlightedCount = parsedItems.filter(item =&gt; item.answer).length;
+            const unverifiedCount = entries.length - highlightedCount;
             if (modelError) {
-                setModelStatus(`AI could not check some answers (${modelError}); the original cards were kept intact.`);
+                setModelStatus(`AI could not interpret the cards (${modelError}); all ${entries.length} source cards were kept together without highlights.`);
+            } else if (cardErrors.length) {
+                setModelStatus(`AI could not interpret ${cardErrors.length} card(s) (${cardErrors[0]}); remaining cards were still sent to AI. Highlighted ${highlightedCount} answers and kept ${unverifiedCount} cards unchanged.`);
             } else {
-                const highlightedCount = [...resolved.values()].filter(item =&gt; item.answer).length;
-                const unverifiedCount = entries.length - highlightedCount;
                 setModelStatus(unverifiedCount
-                    ? `Highlighted answers in ${highlightedCount} of ${entries.length} cards; kept ${unverifiedCount} together because their answers could not be identified confidently.`
-                    : `Highlighted answers in all ${entries.length} cards.`);
+                    ? `AI interpreted all ${entries.length} cards; highlighted ${highlightedCount} answers and kept ${unverifiedCount} cards unchanged.`
+                    : `AI interpreted all ${entries.length} cards and highlighted every answer.`);
             }
-            return { title, items: entries.map(entry =&gt; resolved.get(entry.num)) };
+            return { title, items: parsedItems };
         }
 
         async function handlePaste() {
