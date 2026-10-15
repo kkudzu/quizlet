@@ -969,33 +969,51 @@
             const cleanText = rawText.replace(/\d+\s*\/\s*\d+/g, '')
                 .replace(/Study online at https:\/\/quizlet\.com\/\S+/g, '')
                 .trim();
-            const itemRegex = /(?:^|\n)\s*(\d+)[.)]\s*/g;
-            const matches = [...cleanText.matchAll(itemRegex)];
-            const heading = matches.length
-                ? cleanText.slice(0, matches[0].index).trim().split(/\n+/).filter(Boolean).pop() || fallbackName
-                : fallbackName;
-            const titleMatch = heading.match(/(?:Drivers Ed )?Module \d+/i);
-            let title = titleMatch ? titleMatch[0].trim() : heading;
-            let entries = matches.map((match, index) =&gt; {
-                const start = match.index + match[0].length;
-                const end = index + 1 &lt; matches.length ? matches[index + 1].index : cleanText.length;
-                return { num: Number(match[1]), raw: cleanText.slice(start, end).trim() };
-            }).filter(entry =&gt; entry.raw);
+            const lines = cleanText.split(/\r?\n/).map(line =&gt; line.trim()).filter(Boolean);
+            const tabbedRows = lines.filter(line =&gt; line.includes('\t'));
+            const hasTitle = tabbedRows.length &gt; 0 &amp;&amp; lines.length &gt; 1 &amp;&amp;
+                !lines[0].includes('\t') &amp;&amp; lines.slice(1).every(line =&gt; line.includes('\t'));
+            let title = fallbackName;
+            let entries = [];
+
+            if (tabbedRows.length &amp;&amp; (tabbedRows.length === lines.length - Number(hasTitle))) {
+                const rows = hasTitle ? lines.slice(1) : lines;
+                if (hasTitle) title = lines[0];
+                entries = rows.map((line, index) =&gt; {
+                    const columns = line.split('\t').map(part =&gt; part.trim());
+                    const term = columns.shift() || '';
+                    const answer = columns.join('\n').trim();
+                    return {
+                        num: index + 1,
+                        raw: [term, answer].filter(Boolean).join('\n'),
+                        answer
+                    };
+                }).filter(entry =&gt; entry.raw);
+            } else {
+                const itemRegex = /(?:^|\n)[ \t]*(\d+)[.)][ \t]*/g;
+                const matches = [...cleanText.matchAll(itemRegex)];
+                const isSequentialNumbering = matches.length &gt; 0 &amp;&amp;
+                    matches.every((match, index) =&gt;
+                        index === 0 || Number(match[1]) === Number(matches[index - 1][1]) + 1
+                    );
+                const heading = isSequentialNumbering
+                    ? cleanText.slice(0, matches[0].index).trim().split(/\n+/).filter(Boolean).pop() || fallbackName
+                    : fallbackName;
+                const titleMatch = heading.match(/(?:Drivers Ed )?Module \d+/i);
+                title = titleMatch ? titleMatch[0].trim() : heading;
+                if (isSequentialNumbering) {
+                    entries = matches.map((match, index) =&gt; {
+                        const start = match.index + match[0].length;
+                        const end = index + 1 &lt; matches.length ? matches[index + 1].index : cleanText.length;
+                        return { num: Number(match[1]), raw: cleanText.slice(start, end).trim() };
+                    }).filter(entry =&gt; entry.raw);
+                }
+            }
 
             if (!entries.length) {
                 const body = cleanText;
-                const lines = body.split(/\r?\n/).map(line =&gt; line.trim()).filter(Boolean);
                 const blocks = body.split(/\r?\n\s*\r?\n+/).map(block =&gt; block.trim()).filter(Boolean);
-                if (lines.some(line =&gt; line.includes('\t'))) {
-                    const hasTitle = lines.length &gt; 1 &amp;&amp; !lines[0].includes('\t') &amp;&amp;
-                        lines.slice(1).every(line =&gt; line.includes('\t'));
-                    const rows = hasTitle ? lines.slice(1) : lines;
-                    if (hasTitle) title = lines[0];
-                    entries = rows.map((line, index) =&gt; ({
-                        num: index + 1,
-                        raw: line.split('\t').map(part =&gt; part.trim()).filter(Boolean).join('\n')
-                    }));
-                } else if (blocks.length &gt; 1) {
+                if (blocks.length &gt; 1) {
                     if (/^(?:drivers ed )?module \d+$/i.test(blocks[0])) {
                         title = blocks.shift();
                     }
@@ -1019,6 +1037,10 @@
             if (!entries.length) {
                 throw new Error('No cards were found. Paste numbered cards, tab-separated Quizlet export, or one card per blank-separated block.');
             }
+            entries = entries.map(entry =&gt; entry.answer ? entry : {
+                ...entry,
+                answer: getExplicitCardAnswer(entry.raw)
+            });
             return { title, entries };
         }
 
@@ -1047,12 +1069,13 @@
         }
 
         function preserveCard(entry) {
+            const answer = typeof entry.answer === 'string' ? entry.answer.trim() : '';
             return {
                 num: entry.num,
                 question: entry.raw.split(/\n+/).map(line =&gt; line.trim()).filter(Boolean).join(' '),
                 sourceText: entry.raw,
-                answer: '',
-                highlights: [],
+                answer,
+                highlights: getHighlightPhrases(entry.raw, answer),
                 kind: 'fact',
                 searchTerms: []
             };
@@ -1130,6 +1153,13 @@
             return matchingChoices.length === 1 ? matchingChoices[0].text : cleanedAnswer;
         }
 
+        function getExplicitCardAnswer(source) {
+            const match = source.match(/^\s*(?:correct answer|answer key|correct option|answer)\s*[:=-]\s*(.+?)\s*$/im);
+            if (!match) return '';
+            const answer = resolveModelAnswer(match[1], source);
+            return phraseOccursInAnswer(source, answer) ? answer : '';
+        }
+
         const HIGHLIGHT_KINDS = new Set(['rule', 'action', 'term', 'number', 'warning', 'definition', 'fact']);
         const SEARCH_STOP_WORDS = new Set(['a', 'about', 'an', 'and', 'are', 'can', 'do', 'does', 'for', 'how', 'i', 'in', 'is', 'it', 'me', 'of', 'on', 'or', 'should', 'tell', 'the', 'to', 'what', 'when', 'where', 'which', 'who', 'why', 'with']);
 
@@ -1164,8 +1194,6 @@
             const errors = [];
             const systemPrompt = 'Parse this driving study card. Return JSON only: {"answer":"complete exact answer text","kind":"rule|action|term|number|warning|definition|fact","keywords":["related terms"]}. Solve it using the card. Copy the entire answer line or correct option exactly as printed, never a fragment or letter. Add up to two short related search terms. Pick the safest legal driving action. No explanation.';
             const examples = [
-                { role: 'user', content: 'Card: Tire pressure should be checked _____.\nweekly' },
-                { role: 'assistant', content: '{"answer":"weekly","kind":"rule","keywords":["tire pressure","maintenance"]}' },
                 { role: 'user', content: 'Card: On a wet road, what helps keep a safe gap?\nA. Increase following distance\nB. Follow closely\nC. Brake hard' },
                 { role: 'assistant', content: '{"answer":"Increase following distance","kind":"action","keywords":["rain","safe gap"]}' }
             ];
@@ -1220,28 +1248,38 @@
 
         async function parseQuizletText(rawText, fallbackName) {
             const { title, entries } = getQuizletEntries(rawText, fallbackName);
-            setModelStatus(`Loading local AI to interpret all ${entries.length} cards...`);
-            let parsedItems;
+            const entriesNeedingModel = entries.filter(entry =&gt; !entry.answer);
+            let parsedItems = [];
             let modelError = '';
             let cardErrors = [];
-            try {
-                const result = await parseWithModel(entries);
-                parsedItems = result.items;
-                cardErrors = result.errors;
-            } catch (error) {
-                modelError = error instanceof Error ? error.message : String(error);
+            if (entriesNeedingModel.length) {
+                setModelStatus(`Loading local AI to interpret ${entriesNeedingModel.length} of ${entries.length} cards...`);
+                try {
+                    const result = await parseWithModel(entriesNeedingModel);
+                    cardErrors = result.errors;
+                    let modelIndex = 0;
+                    parsedItems = entries.map(entry =&gt;
+                        entry.answer ? preserveCard(entry) : result.items[modelIndex++]
+                    );
+                } catch (error) {
+                    modelError = error instanceof Error ? error.message : String(error);
+                    parsedItems = entries.map(preserveCard);
+                }
+            } else {
                 parsedItems = entries.map(preserveCard);
             }
             const highlightedCount = parsedItems.filter(item =&gt; item.answer).length;
             const unverifiedCount = entries.length - highlightedCount;
             if (modelError) {
-                setModelStatus(`AI could not interpret the cards (${modelError}); all ${entries.length} source cards were kept together without highlights.`);
+                setModelStatus(`AI could not interpret ${entriesNeedingModel.length} card(s) (${modelError}); all ${entries.length} source cards were kept.`);
             } else if (cardErrors.length) {
-                setModelStatus(`AI could not interpret ${cardErrors.length} card(s) (${cardErrors[0]}); remaining cards were still sent to AI. Highlighted ${highlightedCount} answers and kept ${unverifiedCount} cards unchanged.`);
+                setModelStatus(`AI could not interpret ${cardErrors.length} card(s) (${cardErrors[0]}); all ${entries.length} source cards were kept. Highlighted ${highlightedCount} answers and kept ${unverifiedCount} cards unchanged.`);
+            } else if (!entriesNeedingModel.length) {
+                setModelStatus(`Parsed all ${entries.length} cards from supplied Quizlet answers without AI; highlighted ${highlightedCount} answers.`);
             } else {
                 setModelStatus(unverifiedCount
-                    ? `AI interpreted all ${entries.length} cards; highlighted ${highlightedCount} answers and kept ${unverifiedCount} cards unchanged.`
-                    : `AI interpreted all ${entries.length} cards and highlighted every answer.`);
+                    ? `AI interpreted ${entriesNeedingModel.length} cards; highlighted ${highlightedCount} answers and kept ${unverifiedCount} cards unchanged.`
+                    : `AI interpreted ${entriesNeedingModel.length} cards and highlighted every answer.`);
             }
             return { title, items: parsedItems };
         }
@@ -1341,7 +1379,7 @@
                     const searchTerms = Array.isArray(item.searchTerms) ? item.searchTerms.join(' ') : '';
                     const searchableText = normalizedSourceText(`${sourceText} ${answer} ${searchTerms} ${item.kind || ''}`);
                     const displayText = cardTextForDisplay(sourceText, answer);
-                    const highlights = answer
+const highlights = answer
                         ? getHighlightPhrases(displayText, answer)
                         : [];
                     const cardHtml = highlightImportantText(displayText, highlights, item.kind);
